@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Design tokens. One brand colour (--primary); green / amber / red appear ONLY as status colours in results.
+   To match your institution's brand exactly, change --primary and --ring (HSL, no commas). */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 215 30% 13%;
+    --card: 0 0% 100%;
+    --card-foreground: 215 30% 13%;
+    --muted: 210 30% 96%;
+    --muted-foreground: 215 14% 36%;
+    --border: 214 20% 87%;
+    --input: 214 16% 72%;
+    --primary: 214 76% 27%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 30% 96%;
+    --secondary-foreground: 215 30% 13%;
+    --accent: 212 45% 94%;
+    --accent-foreground: 214 76% 22%;
+    --ring: 214 76% 38%;
+    --success: 152 62% 24%;
+    --success-soft: 150 45% 93%;
+    --warning: 32 90% 24%;
+    --warning-soft: 44 95% 91%;
+    --destructive: 0 66% 38%;
+    --destructive-soft: 0 82% 96%;
+    --radius: 0.5rem;
+  }
+  * { @apply border-border; }
+  html { scroll-padding-top: 5.5rem; -webkit-text-size-adjust: 100%; }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+  body { @apply bg-background text-foreground font-sans antialiased; font-size: 16px; line-height: 1.6; font-feature-settings: 'cv11', 'ss01'; }
+  h1, h2, h3, h4 { @apply tracking-tight text-foreground; }
+  ::selection { background: hsl(var(--primary) / 0.18); }
+}
+
+@layer utilities {
+  .tabular { font-variant-numeric: tabular-nums; }
+}
+
+@media print {
+  @page { margin: 16mm; }
+  body { font-size: 11pt; }
+  .print-keep { break-inside: avoid; }
+}
+
+/* Scroll-reveal elements must never stay hidden in a printout. */
+@media print {
+  [data-reveal] { opacity: 1 !important; transform: none !important; filter: none !important; }
+}
