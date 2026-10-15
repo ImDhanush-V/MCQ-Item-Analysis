@@ -24,6 +24,8 @@ export interface ItemStat {
   diR: number
   optionCounts: Record<string, number>
   optionPct: Record<string, number>
+  optionCountsHL: Record<string, number>   // High + Low groups only (the table on the slides)
+  optionPctHL: Record<string, number>      // as % of High + Low students (blank answers included in the total)
   blank: number
   invalid: number
   nOpt: number
@@ -78,22 +80,28 @@ export function groupSize(n: number): number {
   return Math.floor(n / 3)
 }
 
-export const rateDif = (x: number): Rating => (x > 70 ? { label: 'Too easy', level: 'bad' } : x < 30 ? { label: 'Too difficult', level: 'bad' } : { label: 'Acceptable', level: 'good' })
+// ---- Thresholds and rules follow the NCHPE 2026 slides ----------------------------------------------------------
+/** Difficulty index P: below 30% difficult, 30-70% acceptable (50-60% ideal), above 70% easy. */
+export const rateDif = (x: number): Rating =>
+  x > 70 ? { label: 'Easy', level: 'bad' } : x < 30 ? { label: 'Difficult', level: 'bad' } : x >= 50 && x <= 60 ? { label: 'Ideal', level: 'good' } : { label: 'Acceptable', level: 'good' }
+/** Discrimination index d: below 0.20 poor, 0.20-0.35 good, above 0.35 excellent (a negative d is poor and gets a check-the-key note). */
 export const rateDi = (x: number): Rating =>
-  x < 0 ? { label: 'Defective', level: 'bad' } : x < 0.2 ? { label: 'Poor', level: 'bad' } : x < 0.3 ? { label: 'Acceptable', level: 'warn' } : x < 0.4 ? { label: 'Good', level: 'warn' } : { label: 'Excellent', level: 'good' }
+  x < 0.2 ? { label: 'Poor', level: 'bad' } : x <= 0.35 ? { label: 'Good', level: 'good' } : { label: 'Excellent', level: 'good' }
+/** Distractor effectiveness: 0 NFD excellent, 1 good, 2 requires revision, all wrong options non-functional poor. */
 export const rateDe = (nfd: number, nWrong: number): Rating =>
-  nfd === 0 ? { label: 'Excellent', level: 'good' } : nfd >= nWrong ? { label: 'Poor', level: 'bad' } : nfd === 1 ? { label: 'Good', level: 'warn' } : { label: 'Needs revision', level: 'warn' }
+  nfd === 0 ? { label: 'Excellent', level: 'good' } : nfd >= nWrong ? { label: 'Poor', level: 'bad' } : nfd === 1 ? { label: 'Good', level: 'warn' } : { label: 'Requires revision', level: 'warn' }
 export const rateAlpha = (a: number | null): Rating =>
-  a === null ? { label: 'Not defined', level: 'bad' } : a >= 0.8 ? { label: 'High reliability', level: 'good' } : a >= 0.7 ? { label: 'Acceptable for classroom use', level: 'warn' } : { label: 'Low reliability', level: 'bad' }
+  a === null ? { label: 'Not defined', level: 'bad' } : a >= 0.7 ? { label: 'Acceptable (0.7 or more)', level: 'good' } : a >= 0.5 ? { label: 'Borderline (0.5 to 0.7)', level: 'warn' } : { label: 'Low reliability (below 0.5)', level: 'bad' }
 
-export function decideAction(diR: number, nfd: number, levels: Level[]): { text: string; level: Level; rule: string } {
-  const bad = levels.filter((l) => l === 'bad').length
-  if (diR < 0) return { text: 'Check the answer key or a confusing stem', level: 'bad', rule: 'Rule 1: the discrimination index is negative' }
-  if (bad >= 2) return { text: 'Flawed item: revise the stem and options', level: 'bad', rule: 'Rule 2: two or more ratings are red' }
-  if (bad === 1) return { text: 'Revise (see the red rating)', level: 'bad', rule: 'Rule 3: one rating is red' }
-  if (nfd > 0) return { text: 'Retain; tweak the weak distractor(s)', level: 'warn', rule: 'Rule 4: at least one distractor is non-functional' }
-  if (levels.includes('warn')) return { text: 'Retain; minor review', level: 'warn', rule: 'Rule 5: a rating is amber' }
-  return { text: 'Retain in the question bank', level: 'good', rule: 'Rule 6: all ratings are green' }
+/** The evaluation code (slides 23 to 26). Options are acceptable when at most one distractor is non-functional. */
+export function decideAction(diR: number, nfd: number, difR: number): { text: string; level: Level; rule: string } {
+  const optionsOk = nfd <= 1
+  const optimum = difR >= 30 && difR <= 70
+  if (diR < 0.2)
+    return { text: diR < 0 ? 'Poor item: check the key, then revise or discard' : 'Poor item: revise or discard', level: 'bad', rule: 'Item is poor: discrimination is low (below 0.20)' }
+  if (!optionsOk) return { text: 'Fair item: revise the item', level: 'warn', rule: 'Item is fair: discrimination is acceptable but the options are not' }
+  if (diR > 0.35 && optimum) return { text: 'Good item: retain', level: 'good', rule: 'Item is good: options acceptable, discrimination high, difficulty optimum' }
+  return { text: 'Fair item: retain', level: 'warn', rule: 'Item is fair: options acceptable, discrimination moderate or high, difficulty easy or difficult' }
 }
 
 export function analyse(ds: Dataset): Analysis {
@@ -138,19 +146,26 @@ export function analyse(ds: Dataset): Analysis {
       optionCounts[L] = ds.answers.filter((r) => r[j] === L).length
       optionPct[L] = (optionCounts[L] / n) * 100
     }
-    const nfd = letters.filter((L) => L !== ds.key[j] && optionPct[L] < NFD_CUTOFF_PCT)
+    const hlIdx = [...high, ...low]
+    const optionCountsHL: Record<string, number> = {}
+    const optionPctHL: Record<string, number> = {}
+    for (const L of letters) {
+      optionCountsHL[L] = hlIdx.filter((i) => ds.answers[i][j] === L).length
+      optionPctHL[L] = (optionCountsHL[L] / hlIdx.length) * 100
+    }
+    const nfd = letters.filter((L) => L !== ds.key[j] && optionPctHL[L] < NFD_CUTOFF_PCT)
     const de = ((nWrong - nfd.length) / nWrong) * 100
-    const difR = roundHalfUp(dif, 1)
+    const difR = roundHalfUp(hlPercent, 1) // difficulty index P = (N(H) + N(L)) / (H + L) x 100, as on the slides
     const diR = roundHalfUp(di, 2)
     const difRating = rateDif(difR)
     const diRating = rateDi(diR)
     const deRating = rateDe(nfd.length, nWrong)
     return {
       index: j, label: q.label, heading: q.heading, key: ds.key[j], correct, p: correct / n, variance: sampleVariance(col),
-      dif, difR, highCorrect, lowCorrect, hlDenominator, hlPercent, hlPercentR: roundHalfUp(hlPercent, 1), di, diR, optionCounts, optionPct,
+      dif, difR, highCorrect, lowCorrect, hlDenominator, hlPercent, hlPercentR: roundHalfUp(hlPercent, 1), di, diR, optionCounts, optionPct, optionCountsHL, optionPctHL,
       blank: ds.answers.filter((r) => r[j] === '').length, invalid: ds.answers.filter((r) => r[j] === '?').length,
       nOpt, nWrong, nfd, de, deR: roundHalfUp(de, 1), difRating, diRating, deRating,
-      action: decideAction(diR, nfd.length, [difRating.level, diRating.level, deRating.level]),
+      action: decideAction(diR, nfd.length, difR),
     }
   })
   const sumItemVar = items.reduce((a, b) => a + b.variance, 0)

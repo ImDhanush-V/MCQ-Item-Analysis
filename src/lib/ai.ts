@@ -30,7 +30,7 @@ export async function callAi(endpoint: string, task: 'summary' | 'review' | 'map
 const itemPayload = (i: ItemStat, a: Analysis) => ({
   label: i.label, key: i.key, hlPercent: roundHalfUp(i.hlPercent, 1), dif: i.difR, di: i.diR, nfd: i.nfd.length, de: i.deR,
   difRating: i.difRating.label, diRating: i.diRating.label, action: i.action.text, highCorrect: i.highCorrect, lowCorrect: i.lowCorrect, g: a.g,
-  optionPct: Object.fromEntries(Object.entries(i.optionPct).map(([k, v]) => [k, roundHalfUp(v, 1)])),
+  optionPct: Object.fromEntries(Object.entries(i.optionPctHL).map(([k, v]) => [k, roundHalfUp(v, 1)])),
 })
 export const summaryPayload = (a: Analysis) => ({ n: a.n, k: a.k, g: a.g, nMedium: a.nMedium, mean: roundHalfUp(a.mean, 2), alpha: a.alphaR, alphaRating: a.alphaRating.label, items: a.items.map((i) => itemPayload(i, a)) })
 export const reviewPayload = (a: Analysis, i: ItemStat, text: string) => ({ item: itemPayload(i, a), text })
@@ -46,7 +46,7 @@ export function allowedNumbers(a: Analysis, only?: ItemStat): Set<number> {
   a.items.forEach((i) => level[i.action.level]++)
   ;[a.n, a.k, a.g, a.nMedium, a.mean, a.sd, a.alpha, a.min, a.max, a.median, level.good, level.warn, level.bad].forEach(add)
   for (const i of only ? [only] : a.items) {
-    ;[i.hlPercent, i.dif, i.di, i.de, i.nfd.length, i.correct, i.highCorrect, i.lowCorrect, i.hlDenominator, a.nOptions - 1, ...Object.values(i.optionPct)].forEach(add)
+    ;[i.hlPercent, i.dif, i.di, i.de, i.nfd.length, i.correct, i.highCorrect, i.lowCorrect, i.hlDenominator, a.nOptions - 1, ...Object.values(i.optionPctHL)].forEach(add)
   }
   return s
 }
@@ -72,9 +72,9 @@ export function plainSummary(a: Analysis): string {
   const good = a.items.filter((i) => i.action.level === 'good')
   const bad = a.items.filter((i) => i.action.level === 'bad')
   const rel = a.alpha === null ? 'Reliability could not be worked out because every student scored the same.' : `Reliability (Cronbach's alpha) is ${fmt(a.alpha, 2)}, which is rated "${a.alphaRating.label.toLowerCase()}".`
-  const hard = a.items.filter((i) => i.difRating.label === 'Too difficult').map((i) => i.label)
-  const easy = a.items.filter((i) => i.difRating.label === 'Too easy').map((i) => i.label)
+  const hard = a.items.filter((i) => i.difRating.label === 'Difficult').map((i) => i.label)
+  const easy = a.items.filter((i) => i.difRating.label === 'Easy').map((i) => i.label)
   const p1 = `${a.n} students answered ${a.k} questions; the average score was ${fmt(a.mean, 1)}. ${rel}`
-  const p2 = `${good.length} question${good.length === 1 ? ' is' : 's are'} fine to keep as they are. ${bad.length ? `These need revision: ${bad.map((i) => `${i.label} (${i.action.text.toLowerCase()})`).join('; ')}.` : 'No question is flagged for revision.'}${easy.length ? ` Too easy: ${easy.join(', ')}.` : ''}${hard.length ? ` Too difficult: ${hard.join(', ')}.` : ''}`
+  const p2 = `${good.length} question${good.length === 1 ? ' is' : 's are'} fine to keep as they are. ${bad.length ? `These need revision: ${bad.map((i) => `${i.label} (${i.action.text.toLowerCase()})`).join('; ')}.` : 'No question is flagged for revision.'}${easy.length ? ` Easy: ${easy.join(', ')}.` : ''}${hard.length ? ` Difficult: ${hard.join(', ')}.` : ''}`
   return `${p1}\n\n${p2}`
 }

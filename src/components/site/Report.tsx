@@ -140,18 +140,19 @@ export function Report({ a, hide }: { a: Analysis; hide: boolean }) {
           </Table>
         </Section>
 
-        <Section id="r-dif" num="6" title="Difficulty index (DIF)">
-          <Formula>DIF = ( c / n ) × 100</Formula>
-          <Note>The higher the DIF, the easier the question. Acceptable: 30% to 70%. Above 70%: too easy. Below 30%: too difficult.</Note>
+        <Section id="r-dif" num="6" title="Difficulty index (P)">
+          <Formula>P = ( N(H) + N(L) ) ÷ ( H + L ) × 100</Formula>
+          <Note>N(H) and N(L) are the numbers who answered correctly in the High and Low groups; H and L are the sizes of those groups. This is the same figure as the item analysis % in step 5. Difficult: below 30%. Acceptable: 30% to 70% (50% to 60% is ideal). Easy: above 70%.</Note>
           <Table>
-            <TableHeader><TableRow><TableHead>Question</TableHead><TableHead>c</TableHead><TableHead>Working</TableHead><TableHead>DIF</TableHead><TableHead>Rating</TableHead></TableRow></TableHeader>
-            <TableBody>{a.items.map((i) => (<TableRow key={i.index}><TableCell className="font-semibold">{i.label}</TableCell><TableCell>{i.correct}</TableCell><TableCell><Mono>({i.correct} / {a.n}) × 100</Mono></TableCell><TableCell className="font-semibold">{fmt(i.difR, 1)}%</TableCell><TableCell><RatingBadge r={i.difRating} /></TableCell></TableRow>))}</TableBody>
+            <TableHeader><TableRow><TableHead>Question</TableHead><TableHead>N(H)</TableHead><TableHead>N(L)</TableHead><TableHead>Working</TableHead><TableHead>P</TableHead><TableHead>Rating</TableHead></TableRow></TableHeader>
+            <TableBody>{a.items.map((i) => (<TableRow key={i.index}><TableCell className="font-semibold">{i.label}</TableCell><TableCell>{i.highCorrect}</TableCell><TableCell>{i.lowCorrect}</TableCell><TableCell><Mono>({i.highCorrect} + {i.lowCorrect}) ÷ ({a.g} + {a.g}) × 100</Mono></TableCell><TableCell className="font-semibold">{fmt(i.difR, 1)}%</TableCell><TableCell><RatingBadge r={i.difRating} /></TableCell></TableRow>))}</TableBody>
           </Table>
+          <Note>For reference, the share of all {a.n} students who answered each question correctly: {a.items.map((i) => `${i.label} ${fmt(i.dif, 1)}%`).join(', ')}.</Note>
         </Section>
 
         <Section id="r-di" num="7" title="Discrimination index (DI)">
-          <Formula>DI = ( H / g ) − ( L / g )</Formula>
-          <Note>H and L are the numbers of students in the High and Low group who answered the question correctly. Ranges from −1 to +1. 0.40 or more: excellent. 0.30 to 0.39: good. 0.20 to 0.29: acceptable. Below 0.20: poor. Below 0: defective (low scorers did better than high scorers).</Note>
+          <Formula>d = ( N(H) − N(L) ) ÷ ( H + L ) × 2 {'   '}which is the same as   ( H / g ) − ( L / g )</Formula>
+          <Note>H and L are the numbers of students in the High and Low group who answered the question correctly. Ranges from −1 to +1. Above 0.35: excellent. 0.20 to 0.35: good. Below 0.20: poor. A negative value means low scorers did better than high scorers: check the answer key.</Note>
           <Table>
             <TableHeader><TableRow><TableHead>Question</TableHead><TableHead>H</TableHead><TableHead>L</TableHead><TableHead>Working</TableHead><TableHead>DI</TableHead><TableHead>Rating</TableHead></TableRow></TableHeader>
             <TableBody>{a.items.map((i) => (<TableRow key={i.index}><TableCell className="font-semibold">{i.label}</TableCell><TableCell>{i.highCorrect}</TableCell><TableCell>{i.lowCorrect}</TableCell>
@@ -160,16 +161,16 @@ export function Report({ a, hide }: { a: Analysis; hide: boolean }) {
         </Section>
 
         <Section id="r-de" num="8" title="Distractor analysis">
-          <p>A distractor is a wrong option. First, how many students chose each option, as a percentage of all {a.n} students:</p>
-          <Formula>option % = ( students who chose it / n ) × 100</Formula>
+          <p>A distractor is a wrong option. First, how many High and Low students chose each option, as a percentage of those {2 * a.g} students (blank answers count in the total):</p>
+          <Formula>option % = ( students in High + Low who chose it ÷ ( H + L ) ) × 100</Formula>
           <Table>
             <TableHeader><TableRow><TableHead>Question</TableHead><TableHead>Key</TableHead>{letters.map((l) => <TableHead key={l}>{l}</TableHead>)}</TableRow></TableHeader>
             <TableBody>{a.items.map((i) => (<TableRow key={i.index}><TableCell className="font-semibold">{i.label}</TableCell><TableCell>{i.key}</TableCell>{letters.map((l) => (
-              i.optionPct[l] === undefined ? <TableCell key={l} className="text-muted-foreground">–</TableCell> : <TableCell key={l} className={l === i.key ? 'bg-success-soft font-semibold' : i.optionPct[l] < NFD_CUTOFF_PCT ? 'bg-destructive-soft' : ''}><Mono>{i.optionCounts[l]}/{a.n} = {fmt(i.optionPct[l], 1)}%</Mono></TableCell>))}</TableRow>))}</TableBody>
+              i.optionPctHL[l] === undefined ? <TableCell key={l} className="text-muted-foreground">–</TableCell> : <TableCell key={l} className={l === i.key ? 'bg-success-soft font-semibold' : i.optionPctHL[l] < NFD_CUTOFF_PCT ? 'bg-destructive-soft' : ''}><Mono>{i.optionCountsHL[l]}/{2 * a.g} = {fmt(i.optionPctHL[l], 1)}%</Mono></TableCell>))}</TableRow>))}</TableBody>
           </Table>
-          <p>A wrong option chosen by fewer than {NFD_CUTOFF_PCT}% of students is <b>non-functional</b> (NFD): it does not distract anyone. Distractor efficiency is the share of wrong options that work:</p>
+          <p>A wrong option chosen by fewer than {NFD_CUTOFF_PCT}% of the High and Low students is <b>non-functional</b> (NFD): it does not distract anyone. Distractor efficiency is the share of wrong options that work:</p>
           <Formula>DE = ( wrong options − NFDs ) / wrong options × 100</Formula>
-          <Note>The number of wrong options is one fewer than the number of options ({a.nOptions - 1} here for a question with {a.nOptions} options). 0 NFD: excellent. 1: good. 2 or more: needs revision; all wrong options unused: poor.</Note>
+          <Note>The number of wrong options is one fewer than the number of options ({a.nOptions - 1} here for a question with {a.nOptions} options). 0 NFD (100% DE): excellent. 1 NFD (66.7% with four options): good. 2 NFDs (33.3%): requires revision. All wrong options unused (0%): poor.</Note>
           <Table>
             <TableHeader><TableRow><TableHead>Question</TableHead><TableHead>Non-functional options</TableHead><TableHead>Working</TableHead><TableHead>DE</TableHead><TableHead>Rating</TableHead></TableRow></TableHeader>
             <TableBody>{a.items.map((i) => (<TableRow key={i.index}><TableCell className="font-semibold">{i.label}</TableCell><TableCell>{i.nfd.join(', ') || 'none'}</TableCell><TableCell><Mono>({i.nWrong} − {i.nfd.length}) / {i.nWrong} × 100</Mono></TableCell><TableCell className="font-semibold">{fmt(i.deR, 1)}%</TableCell><TableCell><RatingBadge r={i.deRating} /></TableCell></TableRow>))}</TableBody>
@@ -191,18 +192,16 @@ export function Report({ a, hide }: { a: Analysis; hide: boolean }) {
           ) : (
             <Work>σ²ₜ = {f4(a.variance)}<br />Σσ² / σ²ₜ = {f4(a.sumItemVar)} / {f4(a.variance)} = {f4(ratio)}<br />1 − {f4(ratio)} = {f4(1 - ratio)}<br />k / (k − 1) = {a.k} / {a.k - 1} = {f4(a.k / (a.k - 1))}<br />α = {f4(a.k / (a.k - 1))} × {f4(1 - ratio)} = <b>{f4(a.alpha)}</b> → {fmt(a.alpha, 2)}</Work>
           )}
-          <p className="flex flex-wrap items-center gap-3">Rating: <RatingBadge r={a.alphaRating} /><span className="text-sm text-muted-foreground">0.80 or more: high (high-stakes exams). 0.70 to 0.79: acceptable for classroom assessments. Below 0.70: low.</span></p>
+          <p className="flex flex-wrap items-center gap-3">Rating: <RatingBadge r={a.alphaRating} /><span className="text-sm text-muted-foreground">0.70 or more is preferred. Not below 0.50.</span></p>
         </Section>
 
         <Section id="r-rules" num="10" title="How the recommended action is decided">
           <p>The first rule that applies, from the top, decides the action for a question:</p>
           <ol className="list-decimal space-y-1.5 pl-6 marker:font-semibold marker:text-primary">
-            <li>Discrimination is negative: check the answer key or a confusing stem.</li>
-            <li>Two or more of the three ratings (difficulty, discrimination, distractors) are red: the question is flawed; revise the stem and options.</li>
-            <li>One rating is red: revise, looking at the red rating.</li>
-            <li>A distractor is non-functional: keep the question and tweak the weak distractor(s).</li>
-            <li>A rating is amber: keep it, with a minor review.</li>
-            <li>All ratings are green: keep it in the question bank.</li>
+            <li><b>Poor item</b>: discrimination is below 0.20 (whatever the options and difficulty). Revise or discard. If it is negative, check the answer key first.</li>
+            <li><b>Fair item, revise</b>: discrimination is 0.20 or more but the options are not acceptable (two or more non-functional distractors). Revise the item.</li>
+            <li><b>Good item</b>: options acceptable (at most one non-functional distractor), discrimination above 0.35 and difficulty optimum (30% to 70%). Retain.</li>
+            <li><b>Fair item, retain</b>: options acceptable, discrimination 0.20 or more, difficulty easy or difficult. Retain.</li>
           </ol>
           <Table>
             <TableHeader><TableRow><TableHead>Question</TableHead><TableHead>Difficulty</TableHead><TableHead>Discrimination</TableHead><TableHead>Distractors</TableHead><TableHead>Rule applied</TableHead><TableHead>Action</TableHead></TableRow></TableHeader>
@@ -219,12 +218,12 @@ export function Report({ a, hide }: { a: Analysis; hide: boolean }) {
                 <AccordionContent>
                   <Work>
                     <b>Step 1. Everyone</b><br />Correct c = {i.correct} of n = {a.n} students; incorrect = {a.n - i.correct}<br />
-                    Difficulty index = ({i.correct} ÷ {a.n}) × 100 = <b>{fmt(i.dif, 2)}%</b> → {fmt(i.difR, 1)}% ({i.difRating.label})<br /><br />
+                    For reference, share of all students correct = ({i.correct} ÷ {a.n}) × 100 = {fmt(i.dif, 2)}%<br /><br />
                     <b>Step 2. The groups</b><br />High group: {i.highCorrect} of {a.g} correct. Low group: {i.lowCorrect} of {a.g} correct<br /><br />
-                    <b>Step 3. Item analysis %</b><br />({i.highCorrect} + {i.lowCorrect}) ÷ ({a.g} + {a.g}) × 100 = {i.highCorrect + i.lowCorrect} ÷ {i.hlDenominator} × 100 = <b>{fmt(i.hlPercent, 2)}%</b> → {fmt(i.hlPercentR, 1)}%<br /><br />
+                    <b>Step 3. Item analysis % = difficulty index P</b><br />({i.highCorrect} + {i.lowCorrect}) ÷ ({a.g} + {a.g}) × 100 = {i.highCorrect + i.lowCorrect} ÷ {i.hlDenominator} × 100 = <b>{fmt(i.hlPercent, 2)}%</b> → {fmt(i.hlPercentR, 1)}% ({i.difRating.label})<br /><br />
                     <b>Step 4. Discrimination index</b><br />({i.highCorrect} ÷ {a.g}) − ({i.lowCorrect} ÷ {a.g}) = {f4(i.highCorrect / a.g)} − {f4(i.lowCorrect / a.g)} = <b>{f4(i.di)}</b> → {signed(i.diR)} ({i.diRating.label})<br /><br />
-                    <b>Step 5. Options chosen</b><br />{Object.keys(i.optionCounts).map((l) => `${l}${l === i.key ? ' (key)' : ''}: ${i.optionCounts[l]} of ${a.n} = ${fmt(i.optionPct[l], 1)}%`).join('  |  ')}<br />
-                    Wrong options chosen by fewer than {NFD_CUTOFF_PCT}%: {i.nfd.join(', ') || 'none'} → NFD = {i.nfd.length}<br />
+                    <b>Step 5. Options chosen by the High + Low students</b><br />{Object.keys(i.optionCountsHL).map((l) => `${l}${l === i.key ? ' (key)' : ''}: ${i.optionCountsHL[l]} of ${2 * a.g} = ${fmt(i.optionPctHL[l], 1)}%`).join('  |  ')}<br />
+                    Wrong options chosen by fewer than {NFD_CUTOFF_PCT}% of them: {i.nfd.join(', ') || 'none'} → NFD = {i.nfd.length}<br />
                     Distractor efficiency = ({i.nWrong} − {i.nfd.length}) ÷ {i.nWrong} × 100 = <b>{fmt(i.de, 2)}%</b> → {fmt(i.deR, 1)}% ({i.deRating.label})<br /><br />
                     <b>Step 6. Reliability input</b><br />p = {i.correct} ÷ {a.n} = {f4(i.p)}; q = {f4(1 - i.p)}; variance = {a.n} × {f4(i.p)} × {f4(1 - i.p)} ÷ {a.n - 1} = {f4(i.variance)}<br /><br />
                     <b>Step 7. Decision</b><br />{i.action.rule} → <b>{i.action.text}</b>

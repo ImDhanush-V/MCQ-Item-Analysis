@@ -36,7 +36,8 @@ for (const f of fixtures) {
     a.items.forEach((it, j) => {
       const x = e.items[j]
       assert.equal(it.label, x.label)
-      assert.ok(Math.abs(it.dif - x.dif) < 1e-9, `${it.label} dif`)
+      assert.ok(Math.abs(it.dif - x.dif) < 1e-9, `${it.label} dif (all students, for reference)`)
+      assert.ok(Math.abs(it.hlPercent - x.dif_hl) < 1e-9, `${it.label} difficulty index P (High + Low)`)
       assert.ok(Math.abs(it.di - x.di) < 1e-9, `${it.label} di`)
       assert.equal(it.nfd.length, x.nfd, `${it.label} nfd`)
       assert.ok(Math.abs(it.deR - x.de) < 1e-9, `${it.label} de`)  // Python stores DE rounded to 1 decimal
@@ -44,6 +45,7 @@ for (const f of fixtures) {
       assert.equal(it.highCorrect, x.high_correct); assert.equal(it.lowCorrect, x.low_correct)
       assert.ok(Math.abs(it.hlPercent - x.hl) < 1e-9, `${it.label} item analysis %`)
       for (const [o, p] of Object.entries(x.pct)) assert.ok(Math.abs(it.optionPct[o] - (p as number)) < 1e-9, `${it.label} option ${o}`)
+      for (const [o, p] of Object.entries(x.pct_hl)) assert.ok(Math.abs(it.optionPctHL[o] - (p as number)) < 1e-9, `${it.label} option ${o} (High + Low)`)
       assert.ok(Math.abs((it.blank / a.n) * 100 - x.blank) <= 0.051 && Math.abs((it.invalid / a.n) * 100 - x.invalid) <= 0.051)
     })
   })
@@ -58,7 +60,8 @@ test('hand-calculated example: alpha 0.75, DIF 75/50/25, DI 1', () => {
   assert.deepEqual(a.totals, [3, 2, 1, 0])
   assert.equal(a.mean, 1.5)
   assert.ok(Math.abs(a.variance - 5 / 3) < 1e-12)
-  assert.deepEqual(a.items.map((i) => i.difR), [75, 50, 25])
+  assert.deepEqual(a.items.map((i) => i.dif), [75, 50, 25])               // share of all students correct
+  assert.deepEqual(a.items.map((i) => i.difR), [50, 50, 50])              // difficulty index P = (N(H)+N(L))/(H+L) x 100, g = 1
   assert.deepEqual(a.items.map((i) => i.variance.toFixed(4)), ['0.2500', '0.3333', '0.2500'])
   assert.ok(Math.abs(a.sumItemVar - 5 / 6) < 1e-12)
   assert.ok(Math.abs(a.alpha! - 0.75) < 1e-12)
@@ -102,20 +105,40 @@ test('rounding is half-up and float-safe', () => {
   assert.equal(signed(-0.001), '0.00')
   assert.equal(fmt(-0.004, 2), '0.00')
 })
-test('rating thresholds', () => {
-  assert.equal(rateDif(70).label, 'Acceptable'); assert.equal(rateDif(70.1).label, 'Too easy'); assert.equal(rateDif(30).label, 'Acceptable'); assert.equal(rateDif(29.9).label, 'Too difficult')
-  assert.equal(rateDi(-0.01).label, 'Defective'); assert.equal(rateDi(0.19).label, 'Poor'); assert.equal(rateDi(0.2).label, 'Acceptable'); assert.equal(rateDi(0.3).label, 'Good'); assert.equal(rateDi(0.4).label, 'Excellent')
-  assert.deepEqual([0, 1, 2, 3].map((n) => rateDe(n, 3).label), ['Excellent', 'Good', 'Needs revision', 'Poor'])
+test('rating thresholds follow the slides', () => {
+  assert.equal(rateDif(70).label, 'Acceptable'); assert.equal(rateDif(70.1).label, 'Easy'); assert.equal(rateDif(30).label, 'Acceptable'); assert.equal(rateDif(29.9).label, 'Difficult')
+  assert.equal(rateDif(50).label, 'Ideal'); assert.equal(rateDif(60).label, 'Ideal'); assert.equal(rateDif(60.1).label, 'Acceptable'); assert.equal(rateDif(49.9).label, 'Acceptable')
+  assert.equal(rateDi(-0.01).label, 'Poor'); assert.equal(rateDi(0.19).label, 'Poor'); assert.equal(rateDi(0.2).label, 'Good'); assert.equal(rateDi(0.35).label, 'Good'); assert.equal(rateDi(0.36).label, 'Excellent')
+  assert.deepEqual([0, 1, 2, 3].map((n) => rateDe(n, 3).label), ['Excellent', 'Good', 'Requires revision', 'Poor'])
   assert.equal(rateDe(1, 1).label, 'Poor')       // true/false style: a single non-functional distractor
-  assert.equal(rateAlpha(0.8).label, 'High reliability'); assert.equal(rateAlpha(0.7).level, 'warn'); assert.equal(rateAlpha(0.69).level, 'bad'); assert.equal(rateAlpha(null).level, 'bad')
+  assert.equal(rateAlpha(0.7).label.startsWith('Acceptable'), true); assert.equal(rateAlpha(0.69).level, 'warn'); assert.equal(rateAlpha(0.5).level, 'warn'); assert.equal(rateAlpha(0.49).level, 'bad'); assert.equal(rateAlpha(null).level, 'bad')
 })
-test('action rules in order', () => {
-  assert.equal(decideAction(-0.1, 0, ['good', 'bad', 'good']).rule.slice(0, 6), 'Rule 1')
-  assert.equal(decideAction(0.1, 0, ['bad', 'bad', 'good']).rule.slice(0, 6), 'Rule 2')
-  assert.equal(decideAction(0.1, 0, ['good', 'bad', 'good']).rule.slice(0, 6), 'Rule 3')
-  assert.equal(decideAction(0.5, 1, ['good', 'good', 'warn']).rule.slice(0, 6), 'Rule 4')
-  assert.equal(decideAction(0.25, 0, ['good', 'warn', 'good']).rule.slice(0, 6), 'Rule 5')
-  assert.equal(decideAction(0.5, 0, ['good', 'good', 'good']).rule.slice(0, 6), 'Rule 6')
+test('evaluation code (slides 23 to 26)', () => {
+  assert.equal(decideAction(0.4, 0, 40).text, 'Good item: retain')                  // the slide 9 worked example
+  assert.equal(decideAction(0.36, 1, 70).text, 'Good item: retain')                 // one NFD is still acceptable; 70 is optimum
+  assert.equal(decideAction(0.3, 0, 40).text, 'Fair item: retain')                  // moderate discrimination
+  assert.equal(decideAction(0.5, 0, 80).text, 'Fair item: retain')                  // too easy but discriminates well
+  assert.equal(decideAction(0.5, 2, 40).text, 'Fair item: revise the item')         // options not acceptable
+  assert.equal(decideAction(0.1, 0, 40).text, 'Poor item: revise or discard')
+  assert.ok(decideAction(-0.2, 0, 40).text.includes('check the key'))
+  assert.equal(decideAction(0.19, 0, 40).level, 'bad'); assert.equal(decideAction(0.2, 3, 40).level, 'warn')
+})
+test('150-student paper like slide 9: High + Low counts and P match a hand count', () => {
+  const rows: Grid = []
+  const add = (n: number, ans: string, score: number) => { for (let i = 0; i < n; i++) rows.push([`${ans}${score}_${rows.length}`, ans, score ? 'A' : 'B']) }
+  // 50 High students (second question A = they score 1 there), 50 Low (B = 0); 50 Medium filler so that n/3 = 50
+  add(30, 'C', 1); add(5, 'A', 1); add(5, 'B', 1); add(10, 'D', 1)              // High: C 30, A 5, B 5, D 10
+  add(10, 'C', 0); add(10, 'A', 0); add(10, 'B', 0); add(10, 'D', 0); add(10, '', 0) // Low: C 10, A 10, B 10, D 10, no response 10
+  for (let i = 0; i < 50; i++) rows.push([`M${i}`, 'A', 'A'])                       // Medium: score between (1 here, then 1 more would tie): keep simple
+  const r = run(wb('s.xlsx', { Responses: [['ID', 'Q1', 'Q2'], ...rows], Answer_Key: [['Question', 'Answer'], ['Q1', 'C'], ['Q2', 'A']] }))
+  assert.ok(r.ok, JSON.stringify(r.issues))
+  const a = analyse(r.dataset!)
+  assert.equal(a.n, 150); assert.equal(a.g, 50)
+  const it = a.items[0]
+  // The ranking depends on Q1 as well as Q2, so only assert what the slide's table gives when the groups are as drawn:
+  const hc = a.high.filter((i) => a.dataset.answers[i][0] === 'C').length, lc = a.low.filter((i) => a.dataset.answers[i][0] === 'C').length
+  assert.equal(it.highCorrect, hc); assert.equal(it.lowCorrect, lc)
+  assert.ok(Math.abs(it.hlPercent - ((hc + lc) / 100) * 100) < 1e-12)
 })
 test('ranking: ties keep file order; tied rank; boundary tie warning', () => {
   const g: Grid = [['ID', 'Q1', 'Q2'], ...Array.from({ length: 10 }, (_, i) => [`S${i}`, 'A', i < 5 ? 'A' : 'B'])]

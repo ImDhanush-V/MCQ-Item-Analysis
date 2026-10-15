@@ -22,7 +22,7 @@ export function exportTables(a: Analysis, hideIds: boolean): SheetTable[] {
     {
       name: 'Items',
       rows: [
-        ['Item', 'Heading', 'Key', 'Correct', 'Students', 'Difficulty %', 'Difficulty rating', 'High correct', 'Low correct', 'High total', 'Low total', 'Item analysis % (High+Low)', 'Discrimination', 'Discrimination rating',
+        ['Item', 'Heading', 'Key', 'Correct', 'Students', 'Difficulty index P % (High+Low)', 'Difficulty rating', 'High correct', 'Low correct', 'High total', 'Low total', 'Item analysis % (High+Low)', 'Discrimination', 'Discrimination rating',
           'Non-functional distractors', 'Distractor efficiency %', 'Distractor rating', 'Recommended action', 'Rule applied'],
         ...a.items.map((i) => [i.label, i.heading, i.key, i.correct, a.n, i.difR, i.difRating.label, i.highCorrect, i.lowCorrect, a.g, a.g, r(i.hlPercent, 1), i.diR, i.diRating.label,
           i.nfd.join(', ') || 'none', i.deR, i.deRating.label, i.action.text, i.action.rule]),
@@ -31,8 +31,8 @@ export function exportTables(a: Analysis, hideIds: boolean): SheetTable[] {
     {
       name: 'Distractors',
       rows: [
-        ['Item', 'Key', ...letters.map((l) => `${l} %`), 'Blank %', 'Invalid %'],
-        ...a.items.map((i) => [i.label, i.key, ...letters.map((l) => (i.optionPct[l] === undefined ? '' : r(i.optionPct[l], 1))), r((i.blank / a.n) * 100, 1), r((i.invalid / a.n) * 100, 1)]),
+        ['Item', 'Key', ...letters.map((l) => `${l} % (High+Low)`), 'Blank % (all)', 'Invalid % (all)'],
+        ...a.items.map((i) => [i.label, i.key, ...letters.map((l) => (i.optionPctHL[l] === undefined ? '' : r(i.optionPctHL[l], 1))), r((i.blank / a.n) * 100, 1), r((i.invalid / a.n) * 100, 1)]),
       ],
     },
     {

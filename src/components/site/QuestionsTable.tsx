@@ -30,7 +30,7 @@ export function QuestionsTable({ a }: { a: Analysis }) {
       <table className="w-full min-w-[980px] border-collapse text-[15px]">
         <thead className="border-b bg-muted/60">
           <tr>
-            <th className={th}>Item</th><th className={th}>Key</th><th className={th}>Item analysis<br />% (High + Low)</th><th className={th}>Difficulty<br />index</th>
+            <th className={th}>Item</th><th className={th}>Key</th><th className={th}>Difficulty<br />index</th>
             <th className={th}>Discrimination<br />index</th><th className={th}>NFDs</th><th className={th}>Distractor<br />efficiency</th><th className={cn(th, 'min-w-[17rem]')}>Recommendation</th>
           </tr>
         </thead>
@@ -47,7 +47,6 @@ export function QuestionsTable({ a }: { a: Analysis }) {
                     </button>
                   </td>
                   <td className={cn(td, 'font-medium')}>{text ? <span className="block max-w-[8rem] break-words text-sm">{text[i.key.charCodeAt(0) - 65] ?? i.key}</span> : i.key}</td>
-                  <td className={cn(td, 'text-lg font-bold tabular')}>{fmt(i.hlPercentR, 1)}%</td>
                   <td className={td}><span className="tabular">{fmt(i.difR, 1)}%</span><Meter value={i.difR} level={i.difRating.level} /><div className="mt-2"><RatingBadge r={i.difRating} /></div></td>
                   <td className={td}><span className="tabular">{signed(i.diR)}</span><div className="mt-2"><RatingBadge r={i.diRating} /></div></td>
                   <td className={cn(td, 'tabular')}>{i.nfd.length}</td>
@@ -60,16 +59,16 @@ export function QuestionsTable({ a }: { a: Analysis }) {
                 <AnimatePresence initial={false}>
                   {isOpen && (
                     <tr className="border-b bg-muted/30">
-                      <td colSpan={8} className="p-0">
+                      <td colSpan={7} className="p-0">
                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.28 }} className="overflow-hidden">
                           <div className="grid gap-6 p-6 lg:grid-cols-2">
                             <div className="flex flex-col gap-3">
                               {i.heading !== i.label && <div><p className="text-[12.5px] font-bold uppercase tracking-wider text-muted-foreground">Full question</p><p className="mt-1 text-base">{i.heading}</p></div>}
-                              <div><p className="text-[12.5px] font-bold uppercase tracking-wider text-muted-foreground">Share of all {a.n} students who chose each option</p>
+                              <div><p className="text-[12.5px] font-bold uppercase tracking-wider text-muted-foreground">Share of the {2 * a.g} High and Low students who chose each option</p>
                                 <ul className="mt-2 flex flex-col gap-1.5 text-sm">
-                                  {Object.keys(i.optionPct).map((l) => (
-                                    <li key={l} className={cn('flex items-baseline justify-between gap-4 rounded-md px-3 py-1.5', l === i.key ? 'bg-success-soft font-semibold' : i.optionPct[l] < 5 ? 'bg-destructive-soft' : 'bg-background')}>
-                                      <span>{l}{text?.[l.charCodeAt(0) - 65] ? `. ${text[l.charCodeAt(0) - 65]}` : ''}{l === i.key ? ' (correct)' : i.optionPct[l] < 5 ? ' (unused)' : ''}</span><span className="tabular">{fmt(i.optionPct[l], 1)}%</span>
+                                  {Object.keys(i.optionPctHL).map((l) => (
+                                    <li key={l} className={cn('flex items-baseline justify-between gap-4 rounded-md px-3 py-1.5', l === i.key ? 'bg-success-soft font-semibold' : i.optionPctHL[l] < 5 ? 'bg-destructive-soft' : 'bg-background')}>
+                                      <span>{l}{text?.[l.charCodeAt(0) - 65] ? `. ${text[l.charCodeAt(0) - 65]}` : ''}{l === i.key ? ' (correct)' : i.optionPctHL[l] < 5 ? ' (unused)' : ''}</span><span className="tabular">{fmt(i.optionPctHL[l], 1)}%</span>
                                     </li>
                                   ))}
                                 </ul></div>

@@ -54,6 +54,7 @@ export function Footer() {
         </nav>
         <div className={col}>
           <p className="mb-1 text-[13px] font-semibold uppercase tracking-wider text-white/60">Contact</p>
+          <p className="text-white/90">{site.contactName}</p>
           <a className={a} href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>
         </div>
       </div>

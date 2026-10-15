@@ -112,7 +112,7 @@ export function DistractorsView({ a }: { a: Analysis }) {
           </div>
         </div>
       )}
-      <div className="text-sm text-muted-foreground">Percentage of all students who chose each option. <Badge variant="success">Green</Badge> is the correct answer. <Badge variant="destructive">Red</Badge> is a wrong option chosen by fewer than 5% (non-functional).</div>
+      <div className="text-sm text-muted-foreground">Percentage of the High and Low students who chose each option (blank answers count in the total). <Badge variant="success">Green</Badge> is the correct answer. <Badge variant="destructive">Red</Badge> is a wrong option chosen by fewer than 5% (non-functional).</div>
       <Table>
         <TableHeader><TableRow><TableHead>Item</TableHead><TableHead>Key</TableHead>{letters.map((l) => <TableHead key={l}>{l}</TableHead>)}<TableHead>Blank</TableHead><TableHead>Invalid</TableHead></TableRow></TableHeader>
         <TableBody>
@@ -120,9 +120,9 @@ export function DistractorsView({ a }: { a: Analysis }) {
             <TableRow key={i.index}>
               <TableCell className="font-semibold">{i.label}</TableCell><TableCell>{i.key}</TableCell>
               {letters.map((l) => (
-                i.optionPct[l] === undefined ? <TableCell key={l} className="text-muted-foreground">–</TableCell> : <TableCell key={l} className={cn(l === i.key ? 'bg-success-soft font-semibold' : i.optionPct[l] < 5 && 'bg-destructive-soft')}>{fmt(i.optionPct[l], 1)}%</TableCell>
+                i.optionPctHL[l] === undefined ? <TableCell key={l} className="text-muted-foreground">–</TableCell> : <TableCell key={l} className={cn(l === i.key ? 'bg-success-soft font-semibold' : i.optionPctHL[l] < 5 && 'bg-destructive-soft')}>{fmt(i.optionPctHL[l], 1)}%</TableCell>
               ))}
-              <TableCell>{fmt((i.blank / a.n) * 100, 1)}%</TableCell><TableCell>{fmt((i.invalid / a.n) * 100, 1)}%</TableCell>
+              <TableCell>{fmt((i.blank / a.n) * 100, 1)}% of all</TableCell><TableCell>{fmt((i.invalid / a.n) * 100, 1)}% of all</TableCell>
             </TableRow>
           ))}
         </TableBody>
