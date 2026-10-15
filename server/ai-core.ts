@@ -15,7 +15,7 @@ export interface Env {
 }
 
 const DEFAULT_BASE = 'https://generativelanguage.googleapis.com/v1beta/openai'
-const DEFAULT_MODEL = 'gemini-2.5-flash'
+const DEFAULT_MODEL = 'gemini-1.5-flash'
 const MAX_BODY = 24_000
 const LIMIT = 30                 // requests per visitor per hour (best effort: each server instance counts separately)
 const hits = new Map<string, number[]>()
@@ -115,22 +115,38 @@ export async function handleAi(req: Request, env: Env): Promise<Response> {
   }
 
   try {
-    const r = await fetch(`${(env.AI_BASE_URL || DEFAULT_BASE).replace(/\/$/, '')}/chat/completions`, {
+    const isLikelyOpenAI = env.AI_API_KEY?.startsWith('sk-') && !env.AI_BASE_URL
+    const baseUrl = isLikelyOpenAI ? 'https://api.openai.com/v1' : (env.AI_BASE_URL || DEFAULT_BASE).replace(/\/$/, '')
+    const model = env.AI_MODEL || (isLikelyOpenAI ? 'gpt-4o-mini' : DEFAULT_MODEL)
+
+    const r = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${env.AI_API_KEY}` },
       body: JSON.stringify({
-        model: env.AI_MODEL || DEFAULT_MODEL, temperature: 0.2, max_tokens: chat.maxTokens,
+        model,
+        temperature: 0.2,
+        max_tokens: chat.maxTokens,
         messages: [{ role: 'system', content: chat.system }, { role: 'user', content: chat.user }],
         ...(chat.json ? { response_format: { type: 'json_object' } } : {}),
       }),
       signal: AbortSignal.timeout(25_000),
     })
-    if (!r.ok) return json({ error: `The AI service answered with an error (${r.status}).` }, 502, cors)
+    if (!r.ok) {
+      const errText = await r.text().catch(() => '')
+      let msg = ''
+      try {
+        const j = JSON.parse(errText)
+        msg = j?.error?.message || j?.message || ''
+      } catch {
+        msg = errText.slice(0, 200)
+      }
+      return json({ error: `The AI service answered with an error (${r.status})${msg ? `: ${msg}` : '.'}` }, 502, cors)
+    }
     const data: any = await r.json()
     const text = String(data?.choices?.[0]?.message?.content ?? '').trim()
     if (!text) return json({ error: 'The AI service returned nothing.' }, 502, cors)
     return json({ text }, 200, cors)
-  } catch {
-    return json({ error: 'The AI service could not be reached.' }, 502, cors)
+  } catch (err: any) {
+    return json({ error: `The AI service could not be reached: ${err?.message || err}` }, 502, cors)
   }
 }

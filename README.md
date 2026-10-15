@@ -23,7 +23,7 @@ Features: plain-language summary; per-question review (teacher pastes the questi
 
 It needs a small server function because the API key must stay secret. The code is in `server/ai-core.ts` with wrappers for **Cloudflare Pages** (`functions/api/ai.ts`), **Netlify** (`netlify/functions/ai.mts`) and **Vercel** (`api/ai.ts`). Set these environment variables on the host:
 - `AI_API_KEY` (required). A free Google Gemini key from aistudio.google.com works.
-- `AI_BASE_URL` (default Gemini's OpenAI-compatible address) and `AI_MODEL` (default `gemini-2.5-flash`). Groq, OpenRouter or any OpenAI-compatible service also works.
+- `AI_BASE_URL` (default Gemini's OpenAI-compatible address) and `AI_MODEL` (default `gemini-1.5-flash`). Groq, OpenRouter or any OpenAI-compatible service also works.
 - `ALLOWED_ORIGIN` only if the website and the function are on different addresses (for example the site on GitHub Pages): set it to the site address and build the site with `VITE_AI_ENDPOINT=https://your-function-address/api/ai`.
 Without a key the site works fully; the AI buttons simply do not appear.
 
