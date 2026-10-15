@@ -2,7 +2,7 @@ import { Fragment, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { ChevronDown } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { ReviewBox } from './Ai'
+import { ReviewBox, DistractorExplainBox, WhatIfDropButton } from './Ai'
 import { RatingBadge, variantOf } from './Views'
 import { explainItem } from '@/lib/explain'
 import { fmt, signed } from '@/lib/format'
@@ -74,7 +74,14 @@ export function QuestionsTable({ a }: { a: Analysis }) {
                                 </ul></div>
                               <p className="text-sm text-muted-foreground">High group: {i.highCorrect} of {a.g} correct. Low group: {i.lowCorrect} of {a.g} correct.</p>
                             </div>
-                            <div><p className="mb-3 text-[12.5px] font-bold uppercase tracking-wider text-muted-foreground">Ask the AI about this question</p><ReviewBox a={a} item={i} /></div>
+                            <div className="flex flex-col gap-5">
+                              <div>
+                                <p className="mb-3 text-[12.5px] font-bold uppercase tracking-wider text-muted-foreground">Ask the AI about this question</p>
+                                <ReviewBox a={a} item={i} />
+                              </div>
+                              <DistractorExplainBox a={a} item={i} />
+                              <WhatIfDropButton a={a} item={i} />
+                            </div>
                           </div>
                         </motion.div>
                       </td>

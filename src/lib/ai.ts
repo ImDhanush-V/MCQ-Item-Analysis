@@ -16,7 +16,7 @@ export async function aiAvailable(endpoint: string): Promise<boolean> {
   } catch { return false }
 }
 
-export async function callAi(endpoint: string, task: 'summary' | 'review' | 'mapping', payload: unknown): Promise<string> {
+export async function callAi(endpoint: string, task: 'summary' | 'review' | 'mapping' | 'plan' | 'alpha' | 'issues' | 'distractor' | 'drop', payload: unknown): Promise<string> {
   let r: Response
   try {
     r = await fetch(endpoint, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ task, payload }), signal: AbortSignal.timeout(40000) })
@@ -27,6 +27,7 @@ export async function callAi(endpoint: string, task: 'summary' | 'review' | 'map
   return String(j.text)
 }
 
+// ── Existing payloads ─────────────────────────────────────────────────────────
 const itemPayload = (i: ItemStat, a: Analysis) => ({
   label: i.label, key: i.key, hlPercent: roundHalfUp(i.hlPercent, 1), dif: i.difR, di: i.diR, nfd: i.nfd.length, de: i.deR,
   difRating: i.difRating.label, diRating: i.diRating.label, action: i.action.text, highCorrect: i.highCorrect, lowCorrect: i.lowCorrect, g: a.g,
@@ -35,7 +36,56 @@ const itemPayload = (i: ItemStat, a: Analysis) => ({
 export const summaryPayload = (a: Analysis) => ({ n: a.n, k: a.k, g: a.g, nMedium: a.nMedium, mean: roundHalfUp(a.mean, 2), alpha: a.alphaR, alphaRating: a.alphaRating.label, items: a.items.map((i) => itemPayload(i, a)) })
 export const reviewPayload = (a: Analysis, i: ItemStat, text: string) => ({ item: itemPayload(i, a), text })
 
-// ---------------------------------------------------------------- the number checker
+// ── NEW payload: exam-level action plan ───────────────────────────────────────
+export const planPayload = (a: Analysis) => {
+  const counts = { bad: 0, warn: 0, good: 0 }
+  a.items.forEach((i) => counts[i.action.level]++)
+  return {
+    n: a.n, k: a.k, alpha: a.alphaR, alphaRating: a.alphaRating.label,
+    badCount: counts.bad, warnCount: counts.warn,
+    items: a.items.map((i) => ({ label: i.label, di: i.diR, dif: i.difR, nfd: i.nfd.length, action: i.action.text, level: i.action.level })),
+  }
+}
+
+// ── NEW payload: reliability coaching ────────────────────────────────────────
+export const alphaPayload = (a: Analysis) => ({
+  alpha: a.alphaR, alphaRating: a.alphaRating.label, k: a.k, n: a.n,
+  poorItems: a.items.filter((i) => i.diR < 0.2).map((i) => ({ label: i.label, di: i.diR, dif: i.difR })),
+})
+
+// ── NEW payload: Excel issues explainer ───────────────────────────────────────
+export const issuesPayload = (issues: Array<{ severity: string; sheet: string; cell: string; found: string; problem: string; fix: string }>) => ({ issues })
+
+// ── NEW payload: distractor explanation ──────────────────────────────────────
+export const distractorPayload = (a: Analysis, i: ItemStat, text: string) => ({
+  item: itemPayload(i, a),
+  nfdLetters: i.nfd,
+  text,
+})
+
+// ── NEW payload: what-if drop item ────────────────────────────────────────────
+/** Cronbach's alpha when item j is removed. Returns null if variance is zero without that item. */
+export function alphaIfDropped(a: Analysis, item: ItemStat): number | null {
+  if (a.alpha === null) return null
+  const k = a.k - 1
+  if (k < 2) return null
+  // variance of totals minus item j scores
+  const totalsWithout = a.totals.map((t, idx) => t - a.scores[idx][item.index])
+  const n = totalsWithout.length
+  const mean = totalsWithout.reduce((s, v) => s + v, 0) / n
+  const varWithout = totalsWithout.reduce((s, v) => s + (v - mean) ** 2, 0) / (n - 1)
+  if (varWithout === 0) return null
+  const sumItemVarWithout = a.sumItemVar - item.variance
+  return roundHalfUp((k / (k - 1)) * (1 - sumItemVarWithout / varWithout), 2)
+}
+
+export const dropPayload = (a: Analysis, i: ItemStat) => ({
+  label: i.label, di: i.diR, dif: i.difR, k: a.k,
+  currentAlpha: a.alphaR,
+  alphaIfDropped: alphaIfDropped(a, i),
+})
+
+// ── Number verifier ──────────────────────────────────────────────────────────
 const RULE_NUMBERS = [0, 5, 30, 70, 100, 0.2, 0.3, 0.4, 0.7, 0.8]
 
 /** Every number the AI is allowed to quote, as plain numbers. */
@@ -45,6 +95,8 @@ export function allowedNumbers(a: Analysis, only?: ItemStat): Set<number> {
   const level = { good: 0, warn: 0, bad: 0 }
   a.items.forEach((i) => level[i.action.level]++)
   ;[a.n, a.k, a.g, a.nMedium, a.mean, a.sd, a.alpha, a.min, a.max, a.median, level.good, level.warn, level.bad].forEach(add)
+  // also allow alpha-if-dropped values for all items (needed for drop task)
+  a.items.forEach((i) => add(alphaIfDropped(a, i)))
   for (const i of only ? [only] : a.items) {
     ;[i.hlPercent, i.dif, i.di, i.de, i.nfd.length, i.correct, i.highCorrect, i.lowCorrect, i.hlDenominator, a.nOptions - 1, ...Object.values(i.optionPctHL)].forEach(add)
   }
