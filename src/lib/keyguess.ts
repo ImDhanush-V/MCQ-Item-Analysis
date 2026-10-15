@@ -14,15 +14,16 @@ export function suggestKey(answers: string[][], nOptions: number): { key: string
   }
   let key = Array.from({ length: k }, (_, j) => modal(answers, j).letter)
   const g = Math.max(1, Math.floor(n / 3))
-  for (let pass = 0; pass < 2; pass++) {
-    const totals = answers.map((r) => r.reduce((a, x, j) => a + (x !== '' && x === key[j] ? 1 : 0), 0))
+  const getTop = (currKey: string[]) => {
+    const totals = answers.map((r) => r.reduce((a, x, j) => a + (x !== '' && x === currKey[j] ? 1 : 0), 0))
     const order = totals.map((_, i) => i).sort((a, b) => totals[b] - totals[a] || a - b)
-    const top = order.slice(0, g).map((i) => answers[i])
+    return order.slice(0, g).map((i) => answers[i])
+  }
+  for (let pass = 0; pass < 2; pass++) {
+    const top = getTop(key)
     key = Array.from({ length: k }, (_, j) => modal(top, j).letter || key[j])
   }
-  const totals = answers.map((r) => r.reduce((a, x, j) => a + (x !== '' && x === key[j] ? 1 : 0), 0))
-  const order = totals.map((_, i) => i).sort((a, b) => totals[b] - totals[a] || a - b)
-  const top = order.slice(0, g).map((i) => answers[i])
+  const top = getTop(key)
   const confidence = key.map((L, j) => (top.length ? top.filter((r) => r[j] === L).length / top.length : 0))
   return { key, confidence }
 }

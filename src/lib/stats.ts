@@ -128,6 +128,7 @@ export function analyse(ds: Dataset): Analysis {
     lowTied: totals.filter((t) => t === lowScore).length,
     lowTakenFromTied: low.filter((i) => totals[i] === lowScore).length,
   }
+  const hlIdx = [...high, ...low]
   const items: ItemStat[] = ds.questions.map((q, j) => {
     const col = scores.map((r) => r[j])
     const nOpt = ds.optionCount?.[j] ?? ds.nOptions
@@ -146,7 +147,6 @@ export function analyse(ds: Dataset): Analysis {
       optionCounts[L] = ds.answers.filter((r) => r[j] === L).length
       optionPct[L] = (optionCounts[L] / n) * 100
     }
-    const hlIdx = [...high, ...low]
     const optionCountsHL: Record<string, number> = {}
     const optionPctHL: Record<string, number> = {}
     for (const L of letters) {

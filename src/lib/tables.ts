@@ -22,9 +22,9 @@ export function exportTables(a: Analysis, hideIds: boolean): SheetTable[] {
     {
       name: 'Items',
       rows: [
-        ['Item', 'Heading', 'Key', 'Correct', 'Students', 'Difficulty index P % (High+Low)', 'Difficulty rating', 'High correct', 'Low correct', 'High total', 'Low total', 'Item analysis % (High+Low)', 'Discrimination', 'Discrimination rating',
+        ['Item', 'Heading', 'Key', 'Correct', 'Students', 'Difficulty index P % (High+Low)', 'Difficulty rating', 'High correct', 'Low correct', 'High total', 'Low total', 'Discrimination', 'Discrimination rating',
           'Non-functional distractors', 'Distractor efficiency %', 'Distractor rating', 'Recommended action', 'Rule applied'],
-        ...a.items.map((i) => [i.label, i.heading, i.key, i.correct, a.n, i.difR, i.difRating.label, i.highCorrect, i.lowCorrect, a.g, a.g, r(i.hlPercent, 1), i.diR, i.diRating.label,
+        ...a.items.map((i) => [i.label, i.heading, i.key, i.correct, a.n, i.difR, i.difRating.label, i.highCorrect, i.lowCorrect, a.g, a.g, i.diR, i.diRating.label,
           i.nfd.join(', ') || 'none', i.deR, i.deRating.label, i.action.text, i.action.rule]),
       ],
     },

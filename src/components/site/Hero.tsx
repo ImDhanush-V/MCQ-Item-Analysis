@@ -6,11 +6,11 @@ import { SpotlightCard } from '@/components/bits/SpotlightCard'
 import { site } from '@/config'
 
 const outputs = [
-  { n: '01', t: 'Item analysis %', d: 'Correct answers in the High and Low groups, as a share of both groups.' },
-  { n: '02', t: 'Difficulty', d: 'The share of students who answered each question correctly.' },
-  { n: '03', t: 'Discrimination', d: 'Whether top scorers beat bottom scorers on each question.' },
-  { n: '04', t: 'Distractors', d: 'Which wrong options students actually chose.' },
-  { n: '05', t: 'Reliability', d: "Cronbach's alpha for the whole paper." },
+  { n: '01', t: 'Difficulty index (P)', d: 'Correct answers in the High and Low groups, as a percentage.' },
+  { n: '02', t: 'Discrimination (d)', d: 'Difference in success between high scorers and low scorers.' },
+  { n: '03', t: 'Distractor efficiency', d: 'Non-functional distractors and distractor effectiveness.' },
+  { n: '04', t: 'Recommendation', d: 'Evaluation rules deciding whether to retain, revise, or discard.' },
+  { n: '05', t: 'Reliability', d: "Cronbach's alpha consistency for the whole paper." },
 ]
 
 export function Hero() {
