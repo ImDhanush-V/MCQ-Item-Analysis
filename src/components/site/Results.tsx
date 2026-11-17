@@ -74,7 +74,7 @@ export function Results({ a, hide, check }: { a: Analysis; hide: boolean; check:
         </Reveal>
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
-          <Kpi delay={0} label="Students" note={`${a.g} High · ${a.nMedium} Medium · ${a.g} Low`}><CountUp to={a.n} /></Kpi>
+          <Kpi delay={0} label="Students" note={`${a.n} total`}><CountUp to={a.n} /></Kpi>
           <Kpi delay={0.05} label="Questions" note={`max score ${a.k}`}><CountUp to={a.k} /></Kpi>
           <Kpi delay={0.1} label="Mean score" note={`median ${fmt(a.median, a.median % 1 ? 1 : 0)} · range ${a.min}–${a.max}`}><CountUp to={a.mean} decimals={2} /></Kpi>
           <Kpi delay={0.15} label="Reliability" note={<RatingBadge r={a.alphaRating} />}>{a.alphaR === null ? 'n/a' : <CountUp to={a.alphaR} decimals={2} />}</Kpi>

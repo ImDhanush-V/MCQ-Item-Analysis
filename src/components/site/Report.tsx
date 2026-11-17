@@ -212,7 +212,7 @@ export function Report({ a, hide }: { a: Analysis; hide: boolean }) {
           </ol>
           <Table>
             <TableHeader><TableRow><TableHead>Question</TableHead><TableHead>Difficulty</TableHead><TableHead>Discrimination</TableHead><TableHead>Distractors</TableHead><TableHead>Rule applied</TableHead><TableHead>Action</TableHead></TableRow></TableHeader>
-            <TableBody>{a.items.map((i) => (<TableRow key={i.index}><TableCell className="font-semibold">{i.label}</TableCell><TableCell><RatingBadge r={i.difRating} /></TableCell><TableCell><RatingBadge r={i.diRating} /></TableCell><TableCell><RatingBadge r={i.deRating} /></TableCell><TableCell className="min-w-[14rem]">{i.action.rule}</TableCell><TableCell><Badge variant={variantOf(i.action.level)} className="whitespace-normal">{i.action.text}</Badge></TableCell></TableRow>))}</TableBody>
+            <TableBody>{a.items.map((i) => (<TableRow key={i.index}><TableCell className="font-semibold">{i.label}</TableCell><TableCell><RatingBadge r={i.difRating} /></TableCell><TableCell><RatingBadge r={i.diRating} /></TableCell><TableCell><RatingBadge r={i.deWholeRating} /></TableCell><TableCell className="min-w-[14rem]">{i.action.rule}</TableCell><TableCell><Badge variant={variantOf(i.action.level)} className="whitespace-normal">{i.action.text}</Badge></TableCell></TableRow>))}</TableBody>
           </Table>
         </Section>
 
