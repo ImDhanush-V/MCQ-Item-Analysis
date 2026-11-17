@@ -1,7 +1,6 @@
 import { AlertTriangle, Info } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { issueLine } from './IssuesPanel'
-import { IssueExplainerButton } from './Ai'
 import type { Analysis } from '@/lib/stats'
 import type { CheckResult } from '@/lib/types'
 
@@ -30,7 +29,7 @@ export function DataNotes({ a, check }: { a: Analysis; check: CheckResult | null
             {warnings.map((w, i) => <Alert key={i} variant="warning"><AlertTriangle aria-hidden="true" /><AlertDescription>{issueLine(w)}</AlertDescription></Alert>)}
           </>
         )}
-        {warnings.length > 0 && <IssueExplainerButton a={a} issues={warnings} />}
+        {warnings.length > 0 && <p className="text-sm text-muted-foreground">See the full list of issues above for details.</p>}
       </div>
       <div className="flex flex-col gap-3">
         <h3 className="text-lg font-semibold">Self-check of the arithmetic</h3>

@@ -24,12 +24,18 @@ export interface ItemStat {
   diR: number
   optionCounts: Record<string, number>
   optionPct: Record<string, number>
-  optionCountsHL: Record<string, number>   // High + Low groups only (the table on the slides)
-  optionPctHL: Record<string, number>      // as % of High + Low students (blank answers included in the total)
+  optionCountsHL: Record<string, number>   // High + Low groups only (for the detailed report)
+  optionPctHL: Record<string, number>      // as % of High + Low students (for the detailed report)
   blank: number
   invalid: number
   nOpt: number
   nWrong: number
+  /** NFDs based on whole-group optionPct — used in the main analysis view and decisions */
+  nfdWhole: string[]
+  deWhole: number
+  deWholeR: number
+  deWholeRating: Rating
+  /** NFDs based on High+Low optionPctHL — kept for the detailed report */
   nfd: string[]
   de: number
   deR: number
@@ -155,17 +161,23 @@ export function analyse(ds: Dataset): Analysis {
     }
     const nfd = letters.filter((L) => L !== ds.key[j] && optionPctHL[L] < NFD_CUTOFF_PCT)
     const de = ((nWrong - nfd.length) / nWrong) * 100
+    // Whole-group NFD/DE: based on all n students (used in main analysis view and decisions)
+    const nfdWhole = letters.filter((L) => L !== ds.key[j] && optionPct[L] < NFD_CUTOFF_PCT)
+    const deWhole = ((nWrong - nfdWhole.length) / nWrong) * 100
     const difR = roundHalfUp(hlPercent, 1) // difficulty index P = (N(H) + N(L)) / (H + L) x 100, as on the slides
     const diR = roundHalfUp(di, 2)
     const difRating = rateDif(difR)
     const diRating = rateDi(diR)
     const deRating = rateDe(nfd.length, nWrong)
+    const deWholeRating = rateDe(nfdWhole.length, nWrong)
     return {
       index: j, label: q.label, heading: q.heading, key: ds.key[j], correct, p: correct / n, variance: sampleVariance(col),
       dif, difR, highCorrect, lowCorrect, hlDenominator, hlPercent, hlPercentR: roundHalfUp(hlPercent, 1), di, diR, optionCounts, optionPct, optionCountsHL, optionPctHL,
       blank: ds.answers.filter((r) => r[j] === '').length, invalid: ds.answers.filter((r) => r[j] === '?').length,
-      nOpt, nWrong, nfd, de, deR: roundHalfUp(de, 1), difRating, diRating, deRating,
-      action: decideAction(diR, nfd.length, difR),
+      nOpt, nWrong,
+      nfdWhole, deWhole, deWholeR: roundHalfUp(deWhole, 1), deWholeRating,
+      nfd, de, deR: roundHalfUp(de, 1), difRating, diRating, deRating,
+      action: decideAction(diR, nfdWhole.length, difR),
     }
   })
   const sumItemVar = items.reduce((a, b) => a + b.variance, 0)

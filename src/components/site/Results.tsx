@@ -3,11 +3,11 @@ import { AnimatePresence, motion } from 'motion/react'
 import { Check, ChevronDown, Download, FileText, Printer, XCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CountUp } from '@/components/bits/CountUp'
 import { Reveal } from '@/components/bits/Reveal'
-import { SummaryCard, ActionPlanCard, AlphaCoachButton } from './Ai'
 import { QuestionsTable } from './QuestionsTable'
 import { ItemAnalysisView, StudentsView, DistractorsView, RatingBadge } from './Views'
 import { Report } from './Report'
@@ -15,6 +15,7 @@ import { DataNotes } from './DataNotes'
 import { exportTables } from '@/lib/tables'
 import { downloadXlsx } from '@/lib/export'
 import { fmt } from '@/lib/format'
+import { plainSummary } from '@/lib/summary'
 import type { Analysis } from '@/lib/stats'
 import type { CheckResult } from '@/lib/types'
 
@@ -76,18 +77,23 @@ export function Results({ a, hide, check }: { a: Analysis; hide: boolean; check:
           <Kpi delay={0} label="Students" note={`${a.g} High · ${a.nMedium} Medium · ${a.g} Low`}><CountUp to={a.n} /></Kpi>
           <Kpi delay={0.05} label="Questions" note={`max score ${a.k}`}><CountUp to={a.k} /></Kpi>
           <Kpi delay={0.1} label="Mean score" note={`median ${fmt(a.median, a.median % 1 ? 1 : 0)} · range ${a.min}–${a.max}`}><CountUp to={a.mean} decimals={2} /></Kpi>
-          <Kpi delay={0.15} label="Reliability" note={<><RatingBadge r={a.alphaRating} /><AlphaCoachButton a={a} /></>}>{a.alphaR === null ? 'n/a' : <CountUp to={a.alphaR} decimals={2} />}</Kpi>
+          <Kpi delay={0.15} label="Reliability" note={<RatingBadge r={a.alphaRating} />}>{a.alphaR === null ? 'n/a' : <CountUp to={a.alphaR} decimals={2} />}</Kpi>
           <Kpi delay={0.2} label="Item quality" note={`of ${a.k} questions`}><span className="flex flex-wrap gap-2 pt-1"><Badge variant="success" className="rounded-full px-3 py-1 text-sm">{counts.good} good</Badge><Badge variant="warning" className="rounded-full px-3 py-1 text-sm">{counts.warn} review</Badge><Badge variant="destructive" className="rounded-full px-3 py-1 text-sm">{counts.bad} revise</Badge></span></Kpi>
         </div>
 
         <Reveal className="flex flex-col gap-4">
-          <p className="text-sm text-muted-foreground">Select a question number to see the full question, option shares and an AI review. Green is ideal, amber acceptable, red needs attention.</p>
+          <p className="text-sm text-muted-foreground">Select a question number to see how all students answered each option. NFDs and distractor efficiency are based on the whole group. For the High/Low breakdown, see the detailed report below. Green is ideal, amber acceptable, red needs attention.</p>
           <QuestionsTable a={a} />
         </Reveal>
 
-        <Reveal><SummaryCard a={a} /></Reveal>
-
-        <Reveal><ActionPlanCard a={a} /></Reveal>
+        <Reveal>
+          <Card className="rounded-2xl">
+            <CardContent className="flex flex-col gap-4 p-6">
+              <h3 className="text-lg font-semibold">In plain language</h3>
+              {plainSummary(a).split('\n\n').map((p) => <p key={p} className="text-base leading-relaxed">{p}</p>)}
+            </CardContent>
+          </Card>
+        </Reveal>
 
         <Reveal className="print:hidden">
           <button type="button" onClick={() => setDetail((v) => !v)} aria-expanded={detail} aria-controls="detailed-report" className="flex w-full cursor-pointer items-center justify-between gap-4 rounded-2xl border bg-card p-6 text-left shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">

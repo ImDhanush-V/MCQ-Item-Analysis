@@ -161,20 +161,27 @@ export function Report({ a, hide }: { a: Analysis; hide: boolean }) {
         </Section>
 
         <Section id="r-de" num="8" title="Distractor analysis">
-          <p>A distractor is a wrong option. First, how many High and Low students chose each option, as a percentage of those {2 * a.g} students (blank answers count in the total):</p>
-          <Formula>option % = ( students in High + Low who chose it ÷ ( H + L ) ) × 100</Formula>
+          <p>A distractor is a wrong option. The main analysis view rates distractors using the <strong>whole group</strong> (all {a.n} students). This detailed report also shows the High and Low breakdown for reference. First, how many of all {a.n} students chose each option:</p>
+          <Formula>option % (all) = ( students who chose it ÷ n ) × 100</Formula>
+          <Table>
+            <TableHeader><TableRow><TableHead>Question</TableHead><TableHead>Key</TableHead>{letters.map((l) => <TableHead key={l}>{l}</TableHead>)}</TableRow></TableHeader>
+            <TableBody>{a.items.map((i) => (<TableRow key={i.index}><TableCell className="font-semibold">{i.label}</TableCell><TableCell>{i.key}</TableCell>{letters.map((l) => (
+              i.optionPct[l] === undefined ? <TableCell key={l} className="text-muted-foreground">–</TableCell> : <TableCell key={l} className={l === i.key ? 'bg-success-soft font-semibold' : i.optionPct[l] < NFD_CUTOFF_PCT ? 'bg-destructive-soft' : ''}><Mono>{i.optionCounts[l]}/{a.n} = {fmt(i.optionPct[l], 1)}%</Mono></TableCell>))}<TableCell className="font-semibold"><Mono>{i.nfdWhole.join(', ') || 'none'}</Mono></TableCell></TableRow>))}</TableBody>
+          </Table>
+          <p>Wrong options chosen by fewer than {NFD_CUTOFF_PCT}% of all students are <b>non-functional</b> (NFD). The last column above lists them. Distractor efficiency from the whole group:</p>
+          <Formula>DE (all) = ( wrong options − NFDs ) / wrong options × 100</Formula>
+          <Table>
+            <TableHeader><TableRow><TableHead>Question</TableHead><TableHead>NFDs (whole group)</TableHead><TableHead>Working</TableHead><TableHead>DE</TableHead><TableHead>Rating</TableHead></TableRow></TableHeader>
+            <TableBody>{a.items.map((i) => (<TableRow key={i.index}><TableCell className="font-semibold">{i.label}</TableCell><TableCell>{i.nfdWhole.join(', ') || 'none'}</TableCell><TableCell><Mono>({i.nWrong} − {i.nfdWhole.length}) / {i.nWrong} × 100</Mono></TableCell><TableCell className="font-semibold">{fmt(i.deWholeR, 1)}%</TableCell><TableCell><RatingBadge r={i.deWholeRating} /></TableCell></TableRow>))}</TableBody>
+          </Table>
+          <p>For reference, the same calculation using only the {2 * a.g} High and Low students (as used in the discrimination index):</p>
+          <Formula>option % (H+L) = ( students in High + Low who chose it ÷ ( H + L ) ) × 100</Formula>
           <Table>
             <TableHeader><TableRow><TableHead>Question</TableHead><TableHead>Key</TableHead>{letters.map((l) => <TableHead key={l}>{l}</TableHead>)}</TableRow></TableHeader>
             <TableBody>{a.items.map((i) => (<TableRow key={i.index}><TableCell className="font-semibold">{i.label}</TableCell><TableCell>{i.key}</TableCell>{letters.map((l) => (
               i.optionPctHL[l] === undefined ? <TableCell key={l} className="text-muted-foreground">–</TableCell> : <TableCell key={l} className={l === i.key ? 'bg-success-soft font-semibold' : i.optionPctHL[l] < NFD_CUTOFF_PCT ? 'bg-destructive-soft' : ''}><Mono>{i.optionCountsHL[l]}/{2 * a.g} = {fmt(i.optionPctHL[l], 1)}%</Mono></TableCell>))}</TableRow>))}</TableBody>
           </Table>
-          <p>A wrong option chosen by fewer than {NFD_CUTOFF_PCT}% of the High and Low students is <b>non-functional</b> (NFD): it does not distract anyone. Distractor efficiency is the share of wrong options that work:</p>
-          <Formula>DE = ( wrong options − NFDs ) / wrong options × 100</Formula>
-          <Note>The number of wrong options is one fewer than the number of options ({a.nOptions - 1} here for a question with {a.nOptions} options). 0 NFD (100% DE): excellent. 1 NFD (66.7% with four options): good. 2 NFDs (33.3%): requires revision. All wrong options unused (0%): poor.</Note>
-          <Table>
-            <TableHeader><TableRow><TableHead>Question</TableHead><TableHead>Non-functional options</TableHead><TableHead>Working</TableHead><TableHead>DE</TableHead><TableHead>Rating</TableHead></TableRow></TableHeader>
-            <TableBody>{a.items.map((i) => (<TableRow key={i.index}><TableCell className="font-semibold">{i.label}</TableCell><TableCell>{i.nfd.join(', ') || 'none'}</TableCell><TableCell><Mono>({i.nWrong} − {i.nfd.length}) / {i.nWrong} × 100</Mono></TableCell><TableCell className="font-semibold">{fmt(i.deR, 1)}%</TableCell><TableCell><RatingBadge r={i.deRating} /></TableCell></TableRow>))}</TableBody>
-          </Table>
+          <Note>0 NFD (100% DE): excellent. 1 NFD: good. 2 NFDs: requires revision. All wrong options unused (0%): poor.</Note>
         </Section>
 
         <Section id="r-alpha" num="9" title="Reliability (Cronbach's alpha)">
@@ -222,9 +229,10 @@ export function Report({ a, hide }: { a: Analysis; hide: boolean }) {
                     <b>Step 2. The groups</b><br />High group: {i.highCorrect} of {a.g} correct. Low group: {i.lowCorrect} of {a.g} correct<br /><br />
                     <b>Step 3. Item analysis % = difficulty index P</b><br />({i.highCorrect} + {i.lowCorrect}) ÷ ({a.g} + {a.g}) × 100 = {i.highCorrect + i.lowCorrect} ÷ {i.hlDenominator} × 100 = <b>{fmt(i.hlPercent, 2)}%</b> → {fmt(i.hlPercentR, 1)}% ({i.difRating.label})<br /><br />
                     <b>Step 4. Discrimination index</b><br />({i.highCorrect} ÷ {a.g}) − ({i.lowCorrect} ÷ {a.g}) = {f4(i.highCorrect / a.g)} − {f4(i.lowCorrect / a.g)} = <b>{f4(i.di)}</b> → {signed(i.diR)} ({i.diRating.label})<br /><br />
-                    <b>Step 5. Options chosen by the High + Low students</b><br />{Object.keys(i.optionCountsHL).map((l) => `${l}${l === i.key ? ' (key)' : ''}: ${i.optionCountsHL[l]} of ${2 * a.g} = ${fmt(i.optionPctHL[l], 1)}%`).join('  |  ')}<br />
-                    Wrong options chosen by fewer than {NFD_CUTOFF_PCT}% of them: {i.nfd.join(', ') || 'none'} → NFD = {i.nfd.length}<br />
-                    Distractor efficiency = ({i.nWrong} − {i.nfd.length}) ÷ {i.nWrong} × 100 = <b>{fmt(i.de, 2)}%</b> → {fmt(i.deR, 1)}% ({i.deRating.label})<br /><br />
+                    <b>Step 5. Options chosen (whole group, used for NFD/DE rating)</b><br />{Object.keys(i.optionCounts).map((l) => `${l}${l === i.key ? ' (key)' : ''}: ${i.optionCounts[l]} of ${a.n} = ${fmt(i.optionPct[l], 1)}%`).join('  |  ')}<br />
+                    Wrong options chosen by fewer than {NFD_CUTOFF_PCT}% of all students: {i.nfdWhole.join(', ') || 'none'} → NFD = {i.nfdWhole.length}<br />
+                    Distractor efficiency (whole group) = ({i.nWrong} − {i.nfdWhole.length}) ÷ {i.nWrong} × 100 = <b>{fmt(i.deWhole, 2)}%</b> → {fmt(i.deWholeR, 1)}% ({i.deWholeRating.label})<br />
+                    For reference, same options for the High + Low students ({2 * a.g}): {Object.keys(i.optionCountsHL).map((l) => `${l}: ${i.optionCountsHL[l]} of ${2 * a.g} = ${fmt(i.optionPctHL[l], 1)}%`).join('  |  ')}<br /><br />
                     <b>Step 6. Reliability input</b><br />p = {i.correct} ÷ {a.n} = {f4(i.p)}; q = {f4(1 - i.p)}; variance = {a.n} × {f4(i.p)} × {f4(1 - i.p)} ÷ {a.n - 1} = {f4(i.variance)}<br /><br />
                     <b>Step 7. Decision</b><br />{i.action.rule} → <b>{i.action.text}</b>
                   </Work>

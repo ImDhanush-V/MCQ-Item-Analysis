@@ -112,7 +112,22 @@ export function DistractorsView({ a }: { a: Analysis }) {
           </div>
         </div>
       )}
-      <div className="text-sm text-muted-foreground">Percentage of the High and Low students who chose each option (blank answers count in the total). <Badge variant="success">Green</Badge> is the correct answer. <Badge variant="destructive">Red</Badge> is a wrong option chosen by fewer than 5% (non-functional).</div>
+      <div className="text-sm text-muted-foreground">Percentage of <strong>all {a.n} students</strong> who chose each option (whole-group view, used for NFD and distractor efficiency ratings). <Badge variant="success">Green</Badge> is the correct answer. <Badge variant="destructive">Red</Badge> is a wrong option chosen by fewer than 5% (non-functional).</div>
+      <Table>
+        <TableHeader><TableRow><TableHead>Item</TableHead><TableHead>Key</TableHead>{letters.map((l) => <TableHead key={l}>{l}</TableHead>)}<TableHead>Blank</TableHead><TableHead>Invalid</TableHead></TableRow></TableHeader>
+        <TableBody>
+          {a.items.map((i) => (
+            <TableRow key={i.index}>
+              <TableCell className="font-semibold">{i.label}</TableCell><TableCell>{i.key}</TableCell>
+              {letters.map((l) => (
+                i.optionPct[l] === undefined ? <TableCell key={l} className="text-muted-foreground">–</TableCell> : <TableCell key={l} className={cn(l === i.key ? 'bg-success-soft font-semibold' : i.optionPct[l] < 5 && 'bg-destructive-soft')}>{fmt(i.optionPct[l], 1)}%</TableCell>
+              ))}
+              <TableCell>{fmt((i.blank / a.n) * 100, 1)}%</TableCell><TableCell>{fmt((i.invalid / a.n) * 100, 1)}%</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <div className="mt-4 text-sm text-muted-foreground">Percentage of the <strong>High and Low students only</strong> ({2 * a.g} students) — the breakdown used in the detailed report for discrimination and difficulty calculations. <Badge variant="success">Green</Badge> correct. <Badge variant="destructive">Red</Badge> non-functional (&lt;5% of High+Low).</div>
       <Table>
         <TableHeader><TableRow><TableHead>Item</TableHead><TableHead>Key</TableHead>{letters.map((l) => <TableHead key={l}>{l}</TableHead>)}<TableHead>Blank</TableHead><TableHead>Invalid</TableHead></TableRow></TableHeader>
         <TableBody>
