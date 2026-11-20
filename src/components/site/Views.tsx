@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
 import { fmt } from '@/lib/format'
@@ -46,18 +46,17 @@ function Histogram({ a }: { a: Analysis }) {
 export function ItemAnalysisView({ a }: { a: Analysis }) {
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-muted-foreground">Item analysis % = (High correct + Low correct) ÷ (High total + Low total) × 100. The Medium group is not used in this column. The next tab shows the working.</p>
+      <p className="text-sm text-muted-foreground">Difficulty index P = correct answers ÷ total students × 100. The next tab shows the full working.</p>
       <div className="overflow-x-auto rounded-xl border">
         <Table>
           <TableHeader><TableRow>
-            <TableHead>Item</TableHead><TableHead>Key</TableHead><TableHead>Total students</TableHead><TableHead>Correct (all)</TableHead><TableHead>Incorrect (all)</TableHead>
-            <TableHead>High total</TableHead><TableHead>High correct</TableHead><TableHead>Low total</TableHead><TableHead>Low correct</TableHead><TableHead>High + Low total</TableHead><TableHead>Item analysis %</TableHead>
+            <TableHead>Item</TableHead><TableHead>Key</TableHead><TableHead>Total students</TableHead><TableHead>Correct</TableHead><TableHead>Incorrect</TableHead><TableHead>Difficulty index P</TableHead><TableHead>Rating</TableHead>
           </TableRow></TableHeader>
           <TableBody>
             {a.items.map((i) => (
               <TableRow key={i.index}>
                 <TableCell className="font-semibold">{i.label}</TableCell><TableCell>{i.key}</TableCell><TableCell>{a.n}</TableCell><TableCell>{i.correct}</TableCell><TableCell>{a.n - i.correct}</TableCell>
-                <TableCell>{a.g}</TableCell><TableCell>{i.highCorrect}</TableCell><TableCell>{a.g}</TableCell><TableCell>{i.lowCorrect}</TableCell><TableCell>{i.hlDenominator}</TableCell><TableCell className="font-semibold">{fmt(i.hlPercentR, 1)}%</TableCell>
+                <TableCell className="font-semibold">{fmt(i.difR, 1)}%</TableCell><TableCell><RatingBadge r={i.difRating} /></TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -71,24 +70,15 @@ export function StudentsView({ a, hide }: { a: Analysis; hide: boolean }) {
   const rows = [...a.students].sort((x, y) => a.order.indexOf(x.index) - a.order.indexOf(y.index))
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
-        <Card><CardHeader><CardTitle>Score distribution</CardTitle></CardHeader><CardContent><Histogram a={a} /></CardContent></Card>
-        <Card><CardHeader><CardTitle>Groups</CardTitle><CardDescription>High and Low each hold ⌊n ÷ 3⌋ students. Whatever is left over goes to Medium.</CardDescription></CardHeader>
-          <CardContent><dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
-            <dt className="text-muted-foreground">High</dt><dd className="font-semibold">{a.g} students (scores {a.cutoff.highScore} and above)</dd>
-            <dt className="text-muted-foreground">Medium</dt><dd className="font-semibold">{a.nMedium} students</dd>
-            <dt className="text-muted-foreground">Low</dt><dd className="font-semibold">{a.g} students (scores {a.cutoff.lowScore} and below)</dd>
-          </dl></CardContent></Card>
-      </div>
+      <Card><CardHeader><CardTitle>Score distribution</CardTitle></CardHeader><CardContent><Histogram a={a} /></CardContent></Card>
       <p className="text-sm text-muted-foreground">Students ranked by total score. Equal scores share a rank and keep the order of your file.</p>
       <div className="max-h-[560px] overflow-auto rounded-lg">
         <Table>
-          <TableHeader><TableRow><TableHead>Rank</TableHead><TableHead>Student</TableHead><TableHead>Score</TableHead><TableHead>Percent</TableHead><TableHead>Group</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>Rank</TableHead><TableHead>Student</TableHead><TableHead>Score</TableHead><TableHead>Percent</TableHead></TableRow></TableHeader>
           <TableBody>
             {rows.map((s) => (
               <TableRow key={s.index}>
                 <TableCell>{s.rank}</TableCell><TableCell className="font-medium">{displayId(a, s.index, hide)}</TableCell><TableCell>{s.total} / {a.k}</TableCell><TableCell>{fmt(s.percent, 1)}%</TableCell>
-                <TableCell><Badge variant={s.group === 'High' ? 'success' : s.group === 'Low' ? 'destructive' : 'secondary'}>{s.group}</Badge></TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -112,7 +102,7 @@ export function DistractorsView({ a }: { a: Analysis }) {
           </div>
         </div>
       )}
-      <div className="text-sm text-muted-foreground">Percentage of <strong>all {a.n} students</strong> who chose each option (whole-group view, used for NFD and distractor efficiency ratings). <Badge variant="success">Green</Badge> is the correct answer. <Badge variant="destructive">Red</Badge> is a wrong option chosen by fewer than 5% (non-functional).</div>
+      <div className="text-sm text-muted-foreground">Percentage of <strong>all {a.n} students</strong> who chose each option. <Badge variant="success">Green</Badge> is the correct answer. <Badge variant="destructive">Red</Badge> is a wrong option chosen by fewer than 5% (non-functional distractor).</div>
       <Table>
         <TableHeader><TableRow><TableHead>Item</TableHead><TableHead>Key</TableHead>{letters.map((l) => <TableHead key={l}>{l}</TableHead>)}<TableHead>Blank</TableHead><TableHead>Invalid</TableHead></TableRow></TableHeader>
         <TableBody>
@@ -123,21 +113,6 @@ export function DistractorsView({ a }: { a: Analysis }) {
                 i.optionPct[l] === undefined ? <TableCell key={l} className="text-muted-foreground">–</TableCell> : <TableCell key={l} className={cn(l === i.key ? 'bg-success-soft font-semibold' : i.optionPct[l] < 5 && 'bg-destructive-soft')}>{fmt(i.optionPct[l], 1)}%</TableCell>
               ))}
               <TableCell>{fmt((i.blank / a.n) * 100, 1)}%</TableCell><TableCell>{fmt((i.invalid / a.n) * 100, 1)}%</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      <div className="mt-4 text-sm text-muted-foreground">Percentage of the <strong>High and Low students only</strong> ({2 * a.g} students) — the breakdown used in the detailed report for discrimination and difficulty calculations. <Badge variant="success">Green</Badge> correct. <Badge variant="destructive">Red</Badge> non-functional (&lt;5% of High+Low).</div>
-      <Table>
-        <TableHeader><TableRow><TableHead>Item</TableHead><TableHead>Key</TableHead>{letters.map((l) => <TableHead key={l}>{l}</TableHead>)}<TableHead>Blank</TableHead><TableHead>Invalid</TableHead></TableRow></TableHeader>
-        <TableBody>
-          {a.items.map((i) => (
-            <TableRow key={i.index}>
-              <TableCell className="font-semibold">{i.label}</TableCell><TableCell>{i.key}</TableCell>
-              {letters.map((l) => (
-                i.optionPctHL[l] === undefined ? <TableCell key={l} className="text-muted-foreground">–</TableCell> : <TableCell key={l} className={cn(l === i.key ? 'bg-success-soft font-semibold' : i.optionPctHL[l] < 5 && 'bg-destructive-soft')}>{fmt(i.optionPctHL[l], 1)}%</TableCell>
-              ))}
-              <TableCell>{fmt((i.blank / a.n) * 100, 1)}% of all</TableCell><TableCell>{fmt((i.invalid / a.n) * 100, 1)}% of all</TableCell>
             </TableRow>
           ))}
         </TableBody>

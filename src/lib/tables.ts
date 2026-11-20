@@ -22,9 +22,9 @@ export function exportTables(a: Analysis, hideIds: boolean): SheetTable[] {
     {
       name: 'Items',
       rows: [
-        ['Item', 'Heading', 'Key', 'Correct', 'Students', 'Difficulty index P % (High+Low)', 'Difficulty rating', 'High correct', 'Low correct', 'High total', 'Low total', 'Discrimination', 'Discrimination rating',
-          'Non-functional distractors (all students)', 'Distractor efficiency % (all students)', 'Distractor rating (all students)', 'Recommended action', 'Rule applied'],
-        ...a.items.map((i) => [i.label, i.heading, i.key, i.correct, a.n, i.difR, i.difRating.label, i.highCorrect, i.lowCorrect, a.g, a.g, i.diR, i.diRating.label,
+        ['Item', 'Heading', 'Key', 'Correct', 'Students', 'Difficulty index P %', 'Difficulty rating', 'Discrimination', 'Discrimination rating',
+          'Non-functional distractors', 'Distractor efficiency %', 'Distractor rating', 'Recommended action', 'Rule applied'],
+        ...a.items.map((i) => [i.label, i.heading, i.key, i.correct, a.n, i.difR, i.difRating.label, i.diR, i.diRating.label,
           i.nfdWhole.join(', ') || 'none', i.deWholeR, i.deWholeRating.label, i.action.text, i.action.rule]),
       ],
     },
@@ -37,7 +37,7 @@ export function exportTables(a: Analysis, hideIds: boolean): SheetTable[] {
     },
     {
       name: 'Students',
-      rows: [['Rank', 'Student', 'Total score', 'Percent', 'Group'], ...[...a.students].sort((x, y) => a.order.indexOf(x.index) - a.order.indexOf(y.index)).map((s) => [s.rank, displayId(a, s.index, hideIds), s.total, r(s.percent, 1), s.group])],
+      rows: [['Rank', 'Student', 'Total score', 'Percent'], ...[...a.students].sort((x, y) => a.order.indexOf(x.index) - a.order.indexOf(y.index)).map((s) => [s.rank, displayId(a, s.index, hideIds), s.total, r(s.percent, 1)])],
     },
     {
       name: 'Alpha working',

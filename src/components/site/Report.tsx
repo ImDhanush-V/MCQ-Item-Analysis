@@ -25,10 +25,9 @@ const Note = ({ children }: { children: ReactNode }) => <p className="text-sm te
 const Mono = ({ children }: { children: ReactNode }) => <span className="whitespace-nowrap font-mono text-[14px]">{children}</span>
 
 export const REPORT_SECTIONS = [
-  ['r-about', 'About this report'], ['r-data', '1. Data used'], ['r-score', '2. Scoring'], ['r-totals', '3. Total scores'], ['r-groups', '4. High, Medium, Low'], ['r-ia', '5. Item analysis %'],
-  ['r-dif', '6. Difficulty index'], ['r-di', '7. Discrimination index'], ['r-de', '8. Distractor analysis'], ['r-alpha', '9. Reliability'], ['r-rules', '10. Decisions'], ['r-each', '11. One question at a time'], ['r-limits', '12. Assumptions'],
+  ['r-about', 'About this report'], ['r-data', '1. Data used'], ['r-score', '2. Scoring'], ['r-totals', '3. Total scores'],
+  ['r-dif', '4. Difficulty index'], ['r-di', '5. Discrimination index'], ['r-de', '6. Distractor analysis'], ['r-alpha', '7. Reliability'], ['r-rules', '8. Decisions'], ['r-each', '9. One question at a time'], ['r-limits', '10. Assumptions'],
 ] as const
-
 export function Report({ a, hide }: { a: Analysis; hide: boolean }) {
   const ds = a.dataset
   const letters = LETTERS.slice(0, a.nOptions).split('')
@@ -112,45 +111,16 @@ export function Report({ a, hide }: { a: Analysis; hide: boolean }) {
           </Table>
         </Section>
 
-        <Section id="r-groups" num="4" title="Ranking and the High, Medium and Low groups">
-          <p>Students are ranked from the highest total score to the lowest. Students with equal scores keep the order they have in your file. The first g students in this ranking are the <b>High</b> group, the last g are the <b>Low</b> group, and everyone in between is <b>Medium</b>.</p>
-          <Formula>g = n ÷ 3, rounded down to a whole number<br />Medium = n − 2 × g</Formula>
-          <Work>{a.n} ÷ 3 = {fmt(a.n / 3, 2)} → g = <b>{a.g}</b><br />High = {a.g} students, Low = {a.g} students<br />Medium = {a.n} − 2 × {a.g} = <b>{a.nMedium}</b> students{a.nMedium !== a.g ? ` (the ${a.nMedium - a.g} left over go to Medium)` : ''}<br />High group scores {a.cutoff.highScore} or more; Low group scores {a.cutoff.lowScore} or less</Work>
-          {a.warnings.filter((x) => x.includes('cut-off')).map((x) => <p key={x} className="rounded-md border border-warning/30 bg-warning-soft px-4 py-3 text-sm">{x}</p>)}
-          <div className="grid gap-6 md:grid-cols-2">
-            {([['High group', a.high], ['Low group', a.low]] as const).map(([title, idx]) => (
-              <div key={title}>
-                <h4 className="mb-2 text-base font-semibold">{title} ({idx.length} students)</h4>
-                <div className="max-h-72 overflow-auto rounded-md border">
-                  <Table><TableHeader><TableRow><TableHead>Position</TableHead><TableHead>Student</TableHead><TableHead>Score</TableHead></TableRow></TableHeader>
-                    <TableBody>{idx.map((i) => { const r = rankRow(i); return <TableRow key={i}><TableCell>{r.pos}</TableCell><TableCell>{r.id}</TableCell><TableCell>{r.total}</TableCell></TableRow> })}</TableBody></Table>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Section>
-
-        <Section id="r-ia" num="5" title="Item analysis % (High + Low)">
-          <p>This is the headline figure. It looks only at the High and Low groups and asks: of all the students in those two groups, what share answered the question correctly? The Medium group is left out.</p>
-          <Formula>Item analysis % = ( High correct + Low correct ) ÷ ( High total + Low total ) × 100</Formula>
+        <Section id="r-dif" num="4" title="Difficulty index (P)">
+          <Formula>P = correct answers ÷ total students × 100</Formula>
+          <Note>Difficult: below 30%. Acceptable: 30% to 70% (50% to 60% is ideal). Easy: above 70%.</Note>
           <Table>
-            <TableHeader><TableRow><TableHead>Question</TableHead><TableHead>High correct</TableHead><TableHead>Low correct</TableHead><TableHead>Working</TableHead><TableHead>Item analysis %</TableHead></TableRow></TableHeader>
-            <TableBody>{a.items.map((i) => (<TableRow key={i.index}><TableCell className="font-semibold">{i.label}</TableCell><TableCell>{i.highCorrect} of {a.g}</TableCell><TableCell>{i.lowCorrect} of {a.g}</TableCell>
-              <TableCell><Mono>({i.highCorrect} + {i.lowCorrect}) ÷ ({a.g} + {a.g}) × 100 = {i.highCorrect + i.lowCorrect} ÷ {i.hlDenominator} × 100</Mono></TableCell><TableCell className="font-semibold">{fmt(i.hlPercentR, 1)}%</TableCell></TableRow>))}</TableBody>
+            <TableHeader><TableRow><TableHead>Question</TableHead><TableHead>Correct</TableHead><TableHead>Students</TableHead><TableHead>Working</TableHead><TableHead>P</TableHead><TableHead>Rating</TableHead></TableRow></TableHeader>
+            <TableBody>{a.items.map((i) => (<TableRow key={i.index}><TableCell className="font-semibold">{i.label}</TableCell><TableCell>{i.correct}</TableCell><TableCell>{a.n}</TableCell><TableCell><Mono>{i.correct} ÷ {a.n} × 100</Mono></TableCell><TableCell className="font-semibold">{fmt(i.difR, 1)}%</TableCell><TableCell><RatingBadge r={i.difRating} /></TableCell></TableRow>))}</TableBody>
           </Table>
         </Section>
 
-        <Section id="r-dif" num="6" title="Difficulty index (P)">
-          <Formula>P = ( N(H) + N(L) ) ÷ ( H + L ) × 100</Formula>
-          <Note>N(H) and N(L) are the numbers who answered correctly in the High and Low groups; H and L are the sizes of those groups. This is the same figure as the item analysis % in step 5. Difficult: below 30%. Acceptable: 30% to 70% (50% to 60% is ideal). Easy: above 70%.</Note>
-          <Table>
-            <TableHeader><TableRow><TableHead>Question</TableHead><TableHead>N(H)</TableHead><TableHead>N(L)</TableHead><TableHead>Working</TableHead><TableHead>P</TableHead><TableHead>Rating</TableHead></TableRow></TableHeader>
-            <TableBody>{a.items.map((i) => (<TableRow key={i.index}><TableCell className="font-semibold">{i.label}</TableCell><TableCell>{i.highCorrect}</TableCell><TableCell>{i.lowCorrect}</TableCell><TableCell><Mono>({i.highCorrect} + {i.lowCorrect}) ÷ ({a.g} + {a.g}) × 100</Mono></TableCell><TableCell className="font-semibold">{fmt(i.difR, 1)}%</TableCell><TableCell><RatingBadge r={i.difRating} /></TableCell></TableRow>))}</TableBody>
-          </Table>
-          <Note>For reference, the share of all {a.n} students who answered each question correctly: {a.items.map((i) => `${i.label} ${fmt(i.dif, 1)}%`).join(', ')}.</Note>
-        </Section>
-
-        <Section id="r-di" num="7" title="Discrimination index (DI)">
+        <Section id="r-di" num="5" title="Discrimination index (DI)">
           <Formula>d = ( N(H) − N(L) ) ÷ ( H + L ) × 2 {'   '}which is the same as   ( H / g ) − ( L / g )</Formula>
           <Note>H and L are the numbers of students in the High and Low group who answered the question correctly. Ranges from −1 to +1. Above 0.35: excellent. 0.20 to 0.35: good. Below 0.20: poor. A negative value means low scorers did better than high scorers: check the answer key.</Note>
           <Table>
@@ -160,31 +130,24 @@ export function Report({ a, hide }: { a: Analysis; hide: boolean }) {
           </Table>
         </Section>
 
-        <Section id="r-de" num="8" title="Distractor analysis">
-          <p>A distractor is a wrong option. The main analysis view rates distractors using the <strong>whole group</strong> (all {a.n} students). This detailed report also shows the High and Low breakdown for reference. First, how many of all {a.n} students chose each option:</p>
-          <Formula>option % (all) = ( students who chose it ÷ n ) × 100</Formula>
+        <Section id="r-de" num="6" title="Distractor analysis">
+          <p>A distractor is a wrong option. How many of all {a.n} students chose each option:</p>
+          <Formula>option % = ( students who chose it ÷ n ) × 100</Formula>
           <Table>
-            <TableHeader><TableRow><TableHead>Question</TableHead><TableHead>Key</TableHead>{letters.map((l) => <TableHead key={l}>{l}</TableHead>)}</TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Question</TableHead><TableHead>Key</TableHead>{letters.map((l) => <TableHead key={l}>{l}</TableHead>)}<TableHead>NFDs</TableHead></TableRow></TableHeader>
             <TableBody>{a.items.map((i) => (<TableRow key={i.index}><TableCell className="font-semibold">{i.label}</TableCell><TableCell>{i.key}</TableCell>{letters.map((l) => (
               i.optionPct[l] === undefined ? <TableCell key={l} className="text-muted-foreground">–</TableCell> : <TableCell key={l} className={l === i.key ? 'bg-success-soft font-semibold' : i.optionPct[l] < NFD_CUTOFF_PCT ? 'bg-destructive-soft' : ''}><Mono>{i.optionCounts[l]}/{a.n} = {fmt(i.optionPct[l], 1)}%</Mono></TableCell>))}<TableCell className="font-semibold"><Mono>{i.nfdWhole.join(', ') || 'none'}</Mono></TableCell></TableRow>))}</TableBody>
           </Table>
-          <p>Wrong options chosen by fewer than {NFD_CUTOFF_PCT}% of all students are <b>non-functional</b> (NFD). The last column above lists them. Distractor efficiency from the whole group:</p>
-          <Formula>DE (all) = ( wrong options − NFDs ) / wrong options × 100</Formula>
+          <p>Wrong options chosen by fewer than {NFD_CUTOFF_PCT}% of all students are <b>non-functional</b> (NFD). The last column above lists them. Distractor efficiency:</p>
+          <Formula>DE = ( wrong options − NFDs ) / wrong options × 100</Formula>
           <Table>
-            <TableHeader><TableRow><TableHead>Question</TableHead><TableHead>NFDs (whole group)</TableHead><TableHead>Working</TableHead><TableHead>DE</TableHead><TableHead>Rating</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Question</TableHead><TableHead>NFDs</TableHead><TableHead>Working</TableHead><TableHead>DE</TableHead><TableHead>Rating</TableHead></TableRow></TableHeader>
             <TableBody>{a.items.map((i) => (<TableRow key={i.index}><TableCell className="font-semibold">{i.label}</TableCell><TableCell>{i.nfdWhole.join(', ') || 'none'}</TableCell><TableCell><Mono>({i.nWrong} − {i.nfdWhole.length}) / {i.nWrong} × 100</Mono></TableCell><TableCell className="font-semibold">{fmt(i.deWholeR, 1)}%</TableCell><TableCell><RatingBadge r={i.deWholeRating} /></TableCell></TableRow>))}</TableBody>
           </Table>
-          <p>For reference, the same calculation using only the {2 * a.g} High and Low students (as used in the discrimination index):</p>
-          <Formula>option % (H+L) = ( students in High + Low who chose it ÷ ( H + L ) ) × 100</Formula>
-          <Table>
-            <TableHeader><TableRow><TableHead>Question</TableHead><TableHead>Key</TableHead>{letters.map((l) => <TableHead key={l}>{l}</TableHead>)}</TableRow></TableHeader>
-            <TableBody>{a.items.map((i) => (<TableRow key={i.index}><TableCell className="font-semibold">{i.label}</TableCell><TableCell>{i.key}</TableCell>{letters.map((l) => (
-              i.optionPctHL[l] === undefined ? <TableCell key={l} className="text-muted-foreground">–</TableCell> : <TableCell key={l} className={l === i.key ? 'bg-success-soft font-semibold' : i.optionPctHL[l] < NFD_CUTOFF_PCT ? 'bg-destructive-soft' : ''}><Mono>{i.optionCountsHL[l]}/{2 * a.g} = {fmt(i.optionPctHL[l], 1)}%</Mono></TableCell>))}</TableRow>))}</TableBody>
-          </Table>
-          <Note>0 NFD (100% DE): excellent. 1 NFD: good. 2 NFDs: requires revision. All wrong options unused (0%): poor.</Note>
+          <Note>0 NFD (100% DE): excellent. 1 NFD: good. 2 NFDs: requires revision. All wrong options non-functional (0%): poor.</Note>
         </Section>
 
-        <Section id="r-alpha" num="9" title="Reliability (Cronbach's alpha)">
+        <Section id="r-alpha" num="7" title="Reliability (Cronbach's alpha)">
           <p>Reliability describes how consistently the whole paper measures the same thing. For each question, with p = c / n and q = 1 − p, the variance of its 0/1 scores is:</p>
           <Formula>σ² = n × p × q / (n − 1)</Formula>
           <Table>
@@ -202,7 +165,7 @@ export function Report({ a, hide }: { a: Analysis; hide: boolean }) {
           <p className="flex flex-wrap items-center gap-3">Rating: <RatingBadge r={a.alphaRating} /><span className="text-sm text-muted-foreground">0.70 or more is preferred. Not below 0.50.</span></p>
         </Section>
 
-        <Section id="r-rules" num="10" title="How the recommended action is decided">
+        <Section id="r-rules" num="8" title="How the recommended action is decided">
           <p>The first rule that applies, from the top, decides the action for a question:</p>
           <ol className="list-decimal space-y-1.5 pl-6 marker:font-semibold marker:text-primary">
             <li><b>Poor item</b>: discrimination is below 0.20 (whatever the options and difficulty). Revise or discard. If it is negative, check the answer key first.</li>
@@ -216,7 +179,7 @@ export function Report({ a, hide }: { a: Analysis; hide: boolean }) {
           </Table>
         </Section>
 
-        <Section id="r-each" num="11" title="One question at a time">
+        <Section id="r-each" num="9" title="One question at a time">
           <p>Open a question to see every calculation for it in one place, with your numbers filled in.</p>
           <Accordion type="multiple" defaultValue={[`q-0`]} className="rounded-lg border px-5">
             {a.items.map((i) => (
@@ -224,17 +187,15 @@ export function Report({ a, hide }: { a: Analysis; hide: boolean }) {
                 <AccordionTrigger><span className="flex flex-wrap items-center gap-3"><span>{i.label}</span><Badge variant={variantOf(i.action.level)}>{i.action.text}</Badge></span></AccordionTrigger>
                 <AccordionContent>
                   <Work>
-                    <b>Step 1. Everyone</b><br />Correct c = {i.correct} of n = {a.n} students; incorrect = {a.n - i.correct}<br />
-                    For reference, share of all students correct = ({i.correct} ÷ {a.n}) × 100 = {fmt(i.dif, 2)}%<br /><br />
-                    <b>Step 2. The groups</b><br />High group: {i.highCorrect} of {a.g} correct. Low group: {i.lowCorrect} of {a.g} correct<br /><br />
-                    <b>Step 3. Item analysis % = difficulty index P</b><br />({i.highCorrect} + {i.lowCorrect}) ÷ ({a.g} + {a.g}) × 100 = {i.highCorrect + i.lowCorrect} ÷ {i.hlDenominator} × 100 = <b>{fmt(i.hlPercent, 2)}%</b> → {fmt(i.hlPercentR, 1)}% ({i.difRating.label})<br /><br />
-                    <b>Step 4. Discrimination index</b><br />({i.highCorrect} ÷ {a.g}) − ({i.lowCorrect} ÷ {a.g}) = {f4(i.highCorrect / a.g)} − {f4(i.lowCorrect / a.g)} = <b>{f4(i.di)}</b> → {signed(i.diR)} ({i.diRating.label})<br /><br />
-                    <b>Step 5. Options chosen (whole group, used for NFD/DE rating)</b><br />{Object.keys(i.optionCounts).map((l) => `${l}${l === i.key ? ' (key)' : ''}: ${i.optionCounts[l]} of ${a.n} = ${fmt(i.optionPct[l], 1)}%`).join('  |  ')}<br />
+                    <b>Step 1. All students</b><br />Correct c = {i.correct} of n = {a.n} students; incorrect = {a.n - i.correct}<br />
+                    Difficulty P = ({i.correct} ÷ {a.n}) × 100 = <b>{fmt(i.dif, 2)}%</b> → {fmt(i.difR, 1)}% ({i.difRating.label})<br /><br />
+                    <b>Step 2. Discrimination index</b><br />High group: {i.highCorrect} of {a.g} correct. Low group: {i.lowCorrect} of {a.g} correct<br />
+                    ({i.highCorrect} ÷ {a.g}) − ({i.lowCorrect} ÷ {a.g}) = {f4(i.highCorrect / a.g)} − {f4(i.lowCorrect / a.g)} = <b>{f4(i.di)}</b> → {signed(i.diR)} ({i.diRating.label})<br /><br />
+                    <b>Step 3. Options chosen (all students)</b><br />{Object.keys(i.optionCounts).map((l) => `${l}${l === i.key ? ' (key)' : ''}: ${i.optionCounts[l]} of ${a.n} = ${fmt(i.optionPct[l], 1)}%`).join('  |  ')}<br />
                     Wrong options chosen by fewer than {NFD_CUTOFF_PCT}% of all students: {i.nfdWhole.join(', ') || 'none'} → NFD = {i.nfdWhole.length}<br />
-                    Distractor efficiency (whole group) = ({i.nWrong} − {i.nfdWhole.length}) ÷ {i.nWrong} × 100 = <b>{fmt(i.deWhole, 2)}%</b> → {fmt(i.deWholeR, 1)}% ({i.deWholeRating.label})<br />
-                    For reference, same options for the High + Low students ({2 * a.g}): {Object.keys(i.optionCountsHL).map((l) => `${l}: ${i.optionCountsHL[l]} of ${2 * a.g} = ${fmt(i.optionPctHL[l], 1)}%`).join('  |  ')}<br /><br />
-                    <b>Step 6. Reliability input</b><br />p = {i.correct} ÷ {a.n} = {f4(i.p)}; q = {f4(1 - i.p)}; variance = {a.n} × {f4(i.p)} × {f4(1 - i.p)} ÷ {a.n - 1} = {f4(i.variance)}<br /><br />
-                    <b>Step 7. Decision</b><br />{i.action.rule} → <b>{i.action.text}</b>
+                    Distractor efficiency = ({i.nWrong} − {i.nfdWhole.length}) ÷ {i.nWrong} × 100 = <b>{fmt(i.deWhole, 2)}%</b> → {fmt(i.deWholeR, 1)}% ({i.deWholeRating.label})<br /><br />
+                    <b>Step 4. Reliability input</b><br />p = {i.correct} ÷ {a.n} = {f4(i.p)}; q = {f4(1 - i.p)}; variance = {a.n} × {f4(i.p)} × {f4(1 - i.p)} ÷ {a.n - 1} = {f4(i.variance)}<br /><br />
+                    <b>Step 5. Decision</b><br />{i.action.rule} → <b>{i.action.text}</b>
                   </Work>
                 </AccordionContent>
               </AccordionItem>
@@ -242,12 +203,12 @@ export function Report({ a, hide }: { a: Analysis; hide: boolean }) {
           </Accordion>
         </Section>
 
-        <Section id="r-limits" num="12" title="Assumptions and limits">
+        <Section id="r-limits" num="10" title="Assumptions and limits">
           <ul className="list-disc space-y-2 pl-6 marker:text-primary">
             <li>Each question has one correct option. Blank answers and answers that are not valid option letters count as wrong.</li>
             <li>{a.dataset.textMode ? 'Because the answers are words, the number of options of each question is the number of different answers found for it.' : `Every question is assumed to have ${a.nOptions} options, because that is the highest option letter found in the answers and key (with a minimum of A to D).`}</li>
             <li>Ratings use the values as displayed: difficulty to one decimal place, discrimination to two, alpha to two. Halves round up.</li>
-            <li>The High and Low groups each hold one third of the students (rounded down); the remainder is Medium. Where several students share the cut-off score, those placed in the group are chosen by their order in your file.</li>
+            <li>The discrimination index uses the top and bottom third of students by total score. Where several students share the cut-off score, those placed in the group are chosen by their order in your file.</li>
             <li>With fewer than about 30 students, discrimination and reliability are unstable. Treat them as indicative.</li>
             <li>These statistics describe how the questions behaved for this group of students. They support, and do not replace, expert judgement about each question.</li>
           </ul>
