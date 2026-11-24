@@ -11,8 +11,8 @@ const badgeVariants = cva('inline-flex items-center rounded-md border font-semib
       outline: 'text-foreground',
       // Excellent: mint / emerald green (unchanged)
       success: 'border-[hsl(152_45%_50%)] bg-[hsl(152_45%_87%)] text-[hsl(152_62%_18%)]',
-      // Good: teal — clearly distinct from the mint-green excellent, still a positive/calm tone
-      ok: 'border-[hsl(174_50%_45%)] bg-[hsl(174_50%_90%)] text-[hsl(174_60%_20%)]',
+      // Good: soft teal — lighter, clearly distinct from mint-green excellent
+      ok: 'border-[hsl(174_45%_60%)] bg-[hsl(174_45%_93%)] text-[hsl(174_55%_22%)]',
       warning: 'border-warning/25 bg-warning-soft text-warning',
       destructive: 'border-destructive/25 bg-destructive-soft text-destructive',
     },

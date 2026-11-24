@@ -9,7 +9,13 @@ import { cn } from '@/lib/utils'
 import type { Analysis } from '@/lib/stats'
 import type { Level } from '@/lib/types'
 
-const bar: Record<Level, string> = { good: 'bg-[#38d93f]', ok: 'bg-[#bce6be]', warn: 'bg-[hsl(38_92%_50%)]', bad: 'bg-destructive' }
+// Meter colors match the badge borders: excellent = mint, good = leafy green.
+const bar: Record<Level, string> = {
+  good: 'bg-[hsl(152_45%_50%)]',
+  ok: 'bg-[hsl(105_50%_38%)]',
+  warn: 'bg-[hsl(38_92%_50%)]',
+  bad: 'bg-destructive',
+}
 
 function Meter({ value, level }: { value: number; level: Level }) {
   return (
@@ -51,7 +57,7 @@ export function QuestionsTable({ a }: { a: Analysis }) {
                   <td className={cn(td, 'tabular')}>{i.nfdWhole.length}</td>
                   <td className={td}><span className="tabular">{fmt(i.deWholeR, 0)}%</span><div className="mt-2"><RatingBadge r={i.deWholeRating} /></div></td>
                   <td className={td}>
-                    <Badge variant={variantOf(i.action.level)} className="whitespace-normal rounded-full px-3 py-1 text-sm">{i.action.text}</Badge>
+                    <Badge variant={variantOf(i.action.level)} withIcon className="whitespace-normal rounded-full px-3 py-1 text-sm">{i.action.text}</Badge>
                     <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{explainItem(i, text)}</p>
                   </td>
                 </motion.tr>

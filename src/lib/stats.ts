@@ -92,10 +92,10 @@ export const rateDif = (x: number): Rating =>
   x > 70 ? { label: 'Easy', level: 'bad' } : x < 30 ? { label: 'Difficult', level: 'bad' } : x >= 50 && x <= 60 ? { label: 'Ideal', level: 'good' } : { label: 'Acceptable', level: 'good' }
 /** Discrimination index d: below 0.20 poor, 0.20-0.35 good, above 0.35 excellent (a negative d is poor and gets a check-the-key note). */
 export const rateDi = (x: number): Rating =>
-  x < 0.2 ? { label: 'Poor', level: 'bad' } : x <= 0.35 ? { label: 'Good', level: 'good' } : { label: 'Excellent', level: 'good' }
+  x < 0.2 ? { label: 'Poor', level: 'bad' } : x <= 0.35 ? { label: 'Good', level: 'ok' } : { label: 'Excellent', level: 'good' }
 /** Distractor effectiveness: 0 NFD excellent, 1 good, 2 requires revision, all wrong options non-functional poor. */
 export const rateDe = (nfd: number, nWrong: number): Rating =>
-  nfd === 0 ? { label: 'Excellent', level: 'good' } : nfd >= nWrong ? { label: 'Poor', level: 'bad' } : nfd === 1 ? { label: 'Good', level: 'warn' } : { label: 'Requires revision', level: 'warn' }
+  nfd === 0 ? { label: 'Excellent', level: 'good' } : nfd >= nWrong ? { label: 'Poor', level: 'bad' } : nfd === 1 ? { label: 'Good', level: 'ok' } : { label: 'Requires revision', level: 'warn' }
 export const rateAlpha = (a: number | null): Rating =>
   a === null ? { label: 'Not defined', level: 'bad' } : a >= 0.7 ? { label: 'Acceptable (0.7 or more)', level: 'good' } : a >= 0.5 ? { label: 'Borderline (0.5 to 0.7)', level: 'warn' } : { label: 'Low reliability (below 0.5)', level: 'bad' }
 
