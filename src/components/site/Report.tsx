@@ -170,8 +170,8 @@ export function Report({ a, hide }: { a: Analysis; hide: boolean }) {
           <ol className="list-decimal space-y-1.5 pl-6 marker:font-semibold marker:text-primary">
             <li><b>Poor item</b>: discrimination is below 0.20 (whatever the options and difficulty). Revise or discard. If it is negative, check the answer key first.</li>
             <li><b>Fair item, revise</b>: discrimination is 0.20 or more but the options are not acceptable (two or more non-functional distractors). Revise the item.</li>
-            <li><b>Good item</b>: options acceptable (at most one non-functional distractor), discrimination above 0.35 and difficulty optimum (30% to 70%). Retain.</li>
-            <li><b>Fair item, retain</b>: options acceptable, discrimination 0.20 or more, difficulty easy or difficult. Retain.</li>
+            <li><b>Excellent item</b>: options acceptable (at most one non-functional distractor), discrimination above 0.35 and difficulty optimum (30% to 70%). Retain.</li>
+            <li><b>Good item, retain</b>: options acceptable, discrimination 0.20 or more, difficulty easy or difficult. Retain.</li>
           </ol>
           <Table>
             <TableHeader><TableRow><TableHead>Question</TableHead><TableHead>Difficulty</TableHead><TableHead>Discrimination</TableHead><TableHead>Distractors</TableHead><TableHead>Rule applied</TableHead><TableHead>Action</TableHead></TableRow></TableHeader>

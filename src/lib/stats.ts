@@ -106,8 +106,8 @@ export function decideAction(diR: number, nfd: number, difR: number): { text: st
   if (diR < 0.2)
     return { text: diR < 0 ? 'Poor item: check the key, then revise or discard' : 'Poor item: revise or discard', level: 'bad', rule: 'Item is poor: discrimination is low (below 0.20)' }
   if (!optionsOk) return { text: 'Fair item: revise the item', level: 'warn', rule: 'Item is fair: discrimination is acceptable but the options are not' }
-  if (diR > 0.35 && optimum) return { text: 'Good item: retain', level: 'good', rule: 'Item is good: options acceptable, discrimination high, difficulty optimum' }
-  return { text: 'Fair item: retain', level: 'ok', rule: 'Item is fair: options acceptable, discrimination moderate or high, difficulty easy or difficult' }
+  if (diR > 0.35 && optimum) return { text: 'Excellent item: retain', level: 'good', rule: 'Item is excellent: options acceptable, discrimination high, difficulty optimum' }
+  return { text: 'Good item: retain', level: 'ok', rule: 'Item is good: options acceptable, discrimination moderate or high, difficulty easy or difficult' }
 }
 
 export function analyse(ds: Dataset): Analysis {
