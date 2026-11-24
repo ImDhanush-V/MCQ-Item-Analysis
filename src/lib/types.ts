@@ -32,5 +32,5 @@ export interface Dataset {
 export interface NeedsKey { questions: Question[]; suggested: string[]; confidence: number[]; nOptions: number; optionText?: string[][] }
 export interface CheckResult { ok: boolean; issues: Issue[]; notes: string[]; dataset?: Dataset; needsKey?: NeedsKey }
 
-export type Level = 'good' | 'warn' | 'bad'
+export type Level = 'good' | 'ok' | 'warn' | 'bad'
 export interface Rating { label: string; level: Level }

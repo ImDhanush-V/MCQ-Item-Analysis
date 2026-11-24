@@ -48,7 +48,7 @@ function Kpi({ label, children, note, delay }: { label: string; children: ReactN
 export function Results({ a, hide, check }: { a: Analysis; hide: boolean; check: CheckResult | null }) {
   const [dl, setDl] = useState<DlState>('idle')
   const [detail, setDetail] = useState(false)
-  const counts = { good: 0, warn: 0, bad: 0 }
+  const counts = { good: 0, ok: 0, warn: 0, bad: 0 }
   a.items.forEach((i) => counts[i.action.level]++)
   const download = async () => {
     setDl('loading')
@@ -78,7 +78,7 @@ export function Results({ a, hide, check }: { a: Analysis; hide: boolean; check:
           <Kpi delay={0.05} label="Questions" note={`max score ${a.k}`}><CountUp to={a.k} /></Kpi>
           <Kpi delay={0.1} label="Mean score" note={`median ${fmt(a.median, a.median % 1 ? 1 : 0)} · range ${a.min}–${a.max}`}><CountUp to={a.mean} decimals={2} /></Kpi>
           <Kpi delay={0.15} label="Reliability" note={<RatingBadge r={a.alphaRating} />}>{a.alphaR === null ? 'n/a' : <CountUp to={a.alphaR} decimals={2} />}</Kpi>
-          <Kpi delay={0.2} label="Item quality" note={`of ${a.k} questions`}><span className="flex flex-wrap gap-2 pt-1"><Badge variant="success" className="rounded-full px-3 py-1 text-sm">{counts.good} good</Badge><Badge variant="warning" className="rounded-full px-3 py-1 text-sm">{counts.warn} review</Badge><Badge variant="destructive" className="rounded-full px-3 py-1 text-sm">{counts.bad} revise</Badge></span></Kpi>
+          <Kpi delay={0.2} label="Item quality" note={`of ${a.k} questions`}><span className="flex flex-wrap gap-2 pt-1"><Badge variant="success" className="rounded-full px-3 py-1 text-sm">{counts.good} good</Badge><Badge variant="ok" className="rounded-full px-3 py-1 text-sm">{counts.ok} fair-retain</Badge><Badge variant="warning" className="rounded-full px-3 py-1 text-sm">{counts.warn} revise</Badge><Badge variant="destructive" className="rounded-full px-3 py-1 text-sm">{counts.bad} poor</Badge></span></Kpi>
         </div>
 
         <Reveal className="flex flex-col gap-4">

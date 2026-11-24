@@ -8,7 +8,7 @@ import { displayId } from '@/lib/tables'
 import type { Analysis } from '@/lib/stats'
 import type { Level, Rating } from '@/lib/types'
 
-export const variantOf = (l: Level) => (l === 'good' ? 'success' : l === 'warn' ? 'warning' : 'destructive') as 'success' | 'warning' | 'destructive'
+export const variantOf = (l: Level) => (l === 'good' ? 'success' : l === 'ok' ? 'ok' : l === 'warn' ? 'warning' : 'destructive') as 'success' | 'ok' | 'warning' | 'destructive'
 export const RatingBadge = ({ r }: { r: Rating }) => <Badge variant={variantOf(r.level)}>{r.label}</Badge>
 
 function Histogram({ a }: { a: Analysis }) {

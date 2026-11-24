@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 import type { Analysis } from '@/lib/stats'
 import type { Level } from '@/lib/types'
 
-const bar: Record<Level, string> = { good: 'bg-success', warn: 'bg-[hsl(38_92%_50%)]', bad: 'bg-destructive' }
+const bar: Record<Level, string> = { good: 'bg-success', ok: 'bg-success/50', warn: 'bg-[hsl(38_92%_50%)]', bad: 'bg-destructive' }
 
 function Meter({ value, level }: { value: number; level: Level }) {
   return (
